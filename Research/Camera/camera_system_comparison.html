@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Camera System Comparison — 200×150m Construction Site</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap');
+
+  :root {
+    --ink: #1a1a18;
+    --paper: #f5f2eb;
+    --muted: #7a7669;
+    --rule: #d4cfc4;
+    --ptz: #1e3a5f;
+    --ptz-light: #e8f0f8;
+    --ptz-mid: #4a7ab5;
+    --colorvu: #2d5016;
+    --colorvu-light: #eaf3e0;
+    --colorvu-mid: #5a9e2f;
+    --hybrid: #5c2d00;
+    --hybrid-light: #fdf0e0;
+    --hybrid-mid: #d4860a;
+    --good: #2d6a1e;
+    --good-bg: #eef7e8;
+    --warn: #7a4800;
+    --warn-bg: #fff5e0;
+    --bad: #8b1a1a;
+    --bad-bg: #fdeaea;
+    --neutral: #3a3a38;
+    --neutral-bg: #f0ede6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 40px 24px 80px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* HEADER */
+  .masthead {
+    border-top: 3px solid var(--ink);
+    border-bottom: 1px solid var(--rule);
+    padding: 24px 0 20px;
+    margin-bottom: 32px;
+  }
+  .masthead-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .masthead h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px;
+    line-height: 1.15;
+    font-weight: 400;
+    margin-bottom: 6px;
+  }
+  .masthead h1 em {
+    font-style: italic;
+    color: var(--muted);
+  }
+  .masthead-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  /* INTRO STRIP */
+  .intro-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+  .system-pill {
+    border-radius: 4px;
+    padding: 14px 16px;
+    border-left: 4px solid;
+  }
+  .system-pill.ptz { background: var(--ptz-light); border-color: var(--ptz); }
+  .system-pill.colorvu { background: var(--colorvu-light); border-color: var(--colorvu); }
+  .system-pill.hybrid { background: var(--hybrid-light); border-color: var(--hybrid-mid); }
+  .system-pill-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .ptz .system-pill-label { color: var(--ptz-mid); }
+  .colorvu .system-pill-label { color: var(--colorvu-mid); }
+  .hybrid .system-pill-label { color: var(--hybrid-mid); }
+  .system-pill h3 {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .system-pill p {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+
+  /* SECTION HEADERS */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-top: 1px solid var(--rule);
+    padding-top: 20px;
+    margin-top: 36px;
+    margin-bottom: 14px;
+  }
+
+  /* COMPARISON TABLE */
+  .comp-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .comp-table thead th {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 2px solid var(--ink);
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .comp-table thead th.th-ptz { color: var(--ptz); }
+  .comp-table thead th.th-colorvu { color: var(--colorvu); }
+  .comp-table thead th.th-hybrid { color: var(--hybrid-mid); }
+
+  .comp-table tbody tr { border-bottom: 1px solid var(--rule); }
+  .comp-table tbody tr:last-child { border-bottom: 2px solid var(--ink); }
+  .comp-table tbody tr:hover td { background: rgba(0,0,0,0.02); }
+
+  .comp-table td {
+    padding: 11px 12px;
+    vertical-align: top;
+    line-height: 1.45;
+  }
+  .comp-table td.aspect {
+    font-weight: 600;
+    font-size: 12px;
+    width: 14%;
+    color: var(--ink);
+  }
+  .comp-table td.cell {
+    width: 28.66%;
+  }
+
+  .tag {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    padding: 2px 7px;
+    border-radius: 2px;
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+  .tag.good { background: var(--good-bg); color: var(--good); }
+  .tag.warn { background: var(--warn-bg); color: var(--warn); }
+  .tag.bad { background: var(--bad-bg); color: var(--bad); }
+  .tag.neutral { background: var(--neutral-bg); color: var(--neutral); }
+
+  .cell-detail {
+    font-size: 12px;
+    color: var(--ink);
+    line-height: 1.5;
+    display: block;
+  }
+  .cell-note {
+    font-size: 11px;
+    color: var(--muted);
+    display: block;
+    margin-top: 2px;
+    line-height: 1.4;
+  }
+
+  /* PRICE BREAKDOWN */
+  .price-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .price-card {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .price-card-header {
+    padding: 10px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .price-card.ptz .price-card-header { background: var(--ptz-light); color: var(--ptz); }
+  .price-card.colorvu .price-card-header { background: var(--colorvu-light); color: var(--colorvu); }
+  .price-card.hybrid .price-card-header { background: var(--hybrid-light); color: var(--hybrid-mid); }
+  .price-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 7px 14px;
+    border-top: 1px solid var(--rule);
+    font-size: 12px;
+  }
+  .price-line-label { color: var(--muted); flex: 1; }
+  .price-line-qty { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin: 0 8px; }
+  .price-line-amount { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; }
+  .price-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-top: 2px solid var(--ink);
+    background: var(--paper);
+  }
+  .price-total-label { font-weight: 600; font-size: 13px; }
+  .price-total-amount { font-family: 'DM Mono', monospace; font-weight: 500; font-size: 15px; }
+
+  /* VERDICT */
+  .verdict-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 8px;
+  }
+  .verdict-card {
+    border-radius: 4px;
+    padding: 16px;
+    border: 1px solid var(--rule);
+  }
+  .verdict-card h4 {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  .verdict-card p { font-size: 12px; line-height: 1.55; color: var(--muted); }
+  .verdict-card.recommended {
+    background: var(--colorvu-light);
+    border-color: var(--colorvu-mid);
+  }
+  .verdict-card.recommended h4 { color: var(--colorvu); }
+  .verdict-card.recommended p { color: var(--colorvu); opacity: 0.8; }
+  .recommended-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    background: var(--colorvu);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 2px;
+    display: inline-block;
+    margin-bottom: 8px;
+  }
+
+  .footnote {
+    font-size: 11px;
+    color: var(--muted);
+    border-top: 1px solid var(--rule);
+    padding-top: 16px;
+    margin-top: 36px;
+    font-family: 'DM Mono', monospace;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 768px) {
+    .intro-strip, .price-grid, .verdict-grid { grid-template-columns: 1fr; }
+    .comp-table td.aspect { width: 22%; }
+    body { padding: 20px 12px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="masthead-label">Technical Comparison Report</div>
+  <h1>Camera System Architecture<br><em>for a 200 × 150 m Construction Site</em></h1>
+  <div class="masthead-meta">
+    <span>Central Mast Deployment</span>
+    <span>PoE IP Cameras</span>
+    <span>Nairobi Market Pricing (Ksh)</span>
+    <span>April 2025</span>
+  </div>
+</div>
+
+<!-- SYSTEM DEFINITIONS -->
+<div class="intro-strip">
+  <div class="system-pill ptz">
+    <div class="system-pill-label">System A</div>
+    <h3>4× PTZ Only<br>DS-2DE4225IW-DE (T5)</h3>
+    <p>2MP, 25× optical zoom, 100m IR, PoE+, locked static or moved on demand</p>
+  </div>
+  <div class="system-pill colorvu">
+    <div class="system-pill-label">System B</div>
+    <h3>4× ColorVu Fixed<br>DS-2CD2347G2-L(U)</h3>
+    <p>4MP, F1.0 aperture, full-colour 24/7, 60m white light, PoE, 89° FOV</p>
+  </div>
+  <div class="system-pill hybrid">
+    <div class="system-pill-label">System C — Recommended</div>
+    <h3>2× PTZ + 2× ColorVu<br>Hybrid Mast Setup</h3>
+    <p>Fixed cameras for constant AI detection, PTZ for zoom-in response & perimeter watch</p>
+  </div>
+</div>
+
+<!-- COVERAGE -->
+<div class="section-label">01 — Coverage &amp; Field of View</div>
+<table class="comp-table">
+  <thead>
+    <tr>
+      <th>Aspect</th>
+      <th class="th-ptz">A — 4× PTZ</th>
+      <th class="th-colorvu">B — 4× ColorVu Fixed</th>
+      <th class="th-hybrid">C — Hybrid (2+2)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="aspect">Static FOV per camera</td>
+      <td class="cell">
+        <span class="tag warn">Narrow when zoomed</span>
+        <span class="cell-detail">57.6° wide-angle, narrows to 2.5° at 25× zoom. When locked static at mid-zoom, covers roughly one quadrant (~75m arc).</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Wide fixed</span>
+        <span class="cell-detail">89° horizontal FOV — fixed, always watching. From 10m mast height, each camera covers ~140m arc at ground level.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Best of both</span>
+        <span class="cell-detail">2× ColorVu at wide fixed view cover the full site continuously. 2× PTZ locked on quadrants, zooming on-demand for detail.</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="aspect">Site coverage when locked static</td>
+      <td class="cell">
+        <span class="tag warn">Partial</span>
+        <span class="cell-detail">At useful zoom (5–8×), each PTZ covers roughly one quadrant. Diagonal corner distance is ~130m — within IR range but details depend on zoom setting used.</span>
+        <span class="cell-note">If locked at wide angle (1×), FOV is adequate but zoom advantage is lost.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Full site, all times</span>
+        <span class="cell-detail">4× cameras at 90° intervals cover the full 360° perimeter from a central mast. No blind spots assuming cameras are mounted correctly.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Full + flexible</span>
+        <span class="cell-detail">ColorVu pair covers 180° each. PTZ pair covers remaining 180° at locked wide-angle with zoom available. Operator or AI can redirect PTZ instantly.</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="aspect">Night vision</td>
+      <td class="cell">
+        <span class="tag warn">IR only — B&amp;W at night</span>
+        <span class="cell-detail">100m IR range, but infrared night vision = black &amp; white footage. No colour at night — cannot detect PPE vest colours, hi-vis etc.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Full colour 24/7</span>
+        <span class="cell-detail">F1.0 super-aperture + dual white-light LEDs (~60m range). Colour footage day and night. Critical for PPE colour detection with YOLO.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Full colour from ColorVu</span>
+        <span class="cell-detail">ColorVu cameras maintain colour at night. PTZ cameras supplement with IR zoom capability. Colour AI detection runs on ColorVu stream always.</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="aspect">AI detection reliability</td>
+      <td class="cell">
+        <span class="tag warn">Inconsistent</span>
+        <span class="cell-detail">YOLO needs consistent, wide, stable frames. PTZ view changes with zoom level — model confidence varies. Black &amp; white night footage reduces PPE detection accuracy.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Excellent</span>
+        <span class="cell-detail">Fixed stable frames, consistent colour, consistent FOV = ideal for YOLO training and inference. Best for PPE, intrusion, headcount detection.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Excellent (on ColorVu)</span>
+        <span class="cell-detail">AI runs on stable ColorVu streams. PTZ stream used for human verification of flagged events, not primary detection input.</span>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- CABLING -->
+<div class="section-label">02 — Cabling &amp; Physical Installation</div>
+<table class="comp-table">
+  <thead>
+    <tr>
+      <th>Aspect</th>
+      <th class="th-ptz">A — 4× PTZ</th>
+      <th class="th-colorvu">B — 4× ColorVu Fixed</th>
+      <th class="th-hybrid">C — Hybrid (2+2)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="aspect">Cable type needed</td>
+      <td class="cell">
+        <span class="tag warn">PoE+ (802.3at) Cat6</span>
+        <span class="cell-detail">PTZ draws up to 30W — requires PoE+ not standard PoE. Must use Cat6 outdoor shielded cable. Max 100m per run.</span>
+        <span class="cell-note">PoE standard 802.3af (15.4W) is NOT enough — needs 802.3at (30W).</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Standard PoE Cat6</span>
+        <span class="cell-detail">Draws only ~12W. Standard 802.3af PoE sufficient. Cat6 outdoor UV-resistant cable. Max 100m per run.</span>
+      </td>
+      <td class="cell">
+        <span class="tag warn">Mixed: PoE+ for PTZ, PoE for ColorVu</span>
+        <span class="cell-detail">PTZ runs need PoE+ switch ports. ColorVu runs can use standard PoE ports. Use a PoE+ switch that supports both (most do).</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="aspect">Mast-to-office cable run</td>
+      <td class="cell">
+        <span class="tag neutral">1 trunk cable needed</span>
+        <span class="cell-detail">Mast centre to site office. If &lt;100m: single Cat6 trunk from mast PoE switch. If &gt;100m: run fibre + media converters at each end (~Ksh 8,000–15,000 extra).</span>
+        <span class="cell-note">Run inside conduit buried or steel-armoured surface trunking — not exposed.</span>
+      </td>
+      <td class="cell">
+        <span class="tag neutral">Same as PTZ</span>
+        <span class="cell-detail">Identical trunk run — same solution applies. Camera cable type differs but trunk architecture is the same.</span>
+      </td>
+      <td class="cell">
+        <span class="tag neutral">Same trunk, mixed ports</span>
+        <span class="cell-detail">Single armoured cable run from mast switch box to control room. All 4 cameras aggregate at mast base switch then single uplink to NVR/Mac Mini.</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="aspect">On-mast cabling complexity</td>
+      <td class="cell">
+        <span class="tag warn">Higher</span>
+        <span class="cell-detail">4× PoE+ cables from switch box at mast base up to cameras at mast head. PTZ cameras are heavier (2kg each) — bracket and cable management more involved.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Lower</span>
+        <span class="cell-detail">4× Cat6 cables, lightweight turret cameras (~0.4kg each). Clean installation. Standard mounting brackets.</span>
+      </td>
+      <td class="cell">
+        <span class="tag neutral">Medium</span>
+        <span class="cell-detail">Mix of camera weights and cable requirements. 2× PTZ bracket mounts + 2× turret mounts on same mast head — needs careful positioning at 90° intervals.</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="aspect">Cable protection strategy</td>
+      <td class="cell" colspan="3">
+        <span class="tag good">All three systems — same approach</span>
+        <span class="cell-detail">All cables run inside the mast structure from camera head down to switch box at base (cameras are at top of mast, switch box is inside a weatherproof enclosure at base). A single armoured or conduit-protected trunk cable then runs underground or in armoured trunking from mast base to the control room/site office. This is the key point you raised — minimal exposed cabling on the site surface. Workers only encounter the mast pole itself.</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="aspect">Risk of cable cutting / damage</td>
+      <td class="cell" colspan="3">
+        <span class="tag good">Low for all systems with correct installation</span>
+        <span class="cell-detail">Cables inside mast structure + underground or armoured trunking from mast to office = virtually no accessible cable on the site. The only exposed hardware is the mast itself and camera heads, both of which are at height. This is why the central mast concept is smart — it minimises cable sprawl across a live construction site compared to corner-mounted cameras each needing their own cable run.</span>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- RESOLUTION & IMAGE QUALITY -->
+<div class="section-label">03 — Resolution, Image Quality &amp; Low-Light</div>
+<table class="comp-table">
+  <thead>
+    <tr>
+      <th>Aspect</th>
+      <th class="th-ptz">A — 4× PTZ</th>
+      <th class="th-colorvu">B — 4× ColorVu Fixed</th>
+      <th class="th-hybrid">C — Hybrid (2+2)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="aspect">Sensor resolution</td>
+      <td class="cell">
+        <span class="tag warn">2MP (1920×1080)</span>
+        <span class="cell-detail">1/2.8" CMOS. Adequate in daylight. At 25× zoom on a distant worker you get detail — but the base resolution cap means digital crop has limits.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">4MP (2688×1520)</span>
+        <span class="cell-detail">1/1.8" CMOS — larger sensor, more light, higher pixel count. Significantly better detail for AI model input, licence plate reading, face-level ID at range.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">4MP (ColorVu) + 2MP (PTZ)</span>
+        <span class="cell-detail">AI detection runs on the higher-res 4MP streams. PTZ 2MP used for zoomed response — at 25× you still get usable detail for human operator review.</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="aspect">Low-light colour</td>
+      <td class="cell">
+        <span class="tag bad">Black &amp; white at night</span>
+        <span class="cell-detail">DarkFighter is excellent B&W in low light — 0.001 Lux in mono. But IR-illuminated footage is greyscale. PPE vest colour, uniform identification — impossible at night.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Full colour 0 Lux</span>
+        <span class="cell-detail">White LED illumination means 0 Lux minimum illumination in colour. F1.0 aperture collects more light than any IR camera. Colour maintained in total darkness.</span>
+        <span class="cell-note">Tradeoff: white LEDs are visible — cameras are not covert at night.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Colour from ColorVu always</span>
+        <span class="cell-detail">AI detection always runs on colour footage regardless of time of day. PTZ provides B&W IR zoom when needed. For PPE detection, the colour stream is what matters.</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="aspect">WDR (backlight handling)</td>
+      <td class="cell">
+        <span class="tag neutral">120dB WDR</span>
+        <span class="cell-detail">Good for high-contrast scenes (direct sun behind a worker). Handles site conditions well.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">130dB WDR</span>
+        <span class="cell-detail">Slightly better WDR. At a construction site facing the morning sun, this matters for eastern-facing cameras.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">130dB on ColorVu</span>
+        <span class="cell-note">Positioned correctly on mast, sun glare affects all cameras equally regardless of type.</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="aspect">Zoom capability</td>
+      <td class="cell">
+        <span class="tag good">25× optical + 16× digital</span>
+        <span class="cell-detail">Ability to read text on machinery, ID a face at 80–100m, read vehicle plates. Unmatched for operator-driven investigation.</span>
+      </td>
+      <td class="cell">
+        <span class="tag bad">Fixed 4mm lens only</span>
+        <span class="cell-detail">No optical zoom. Software digital zoom only — degrades quality rapidly. Cannot zoom in on a specific worker at 100m for ID purposes.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">25× available via PTZ</span>
+        <span class="cell-detail">When an AI event triggers, operator or automated PTZ preset directs one PTZ to zoom in on exact location for identity confirmation or detailed review.</span>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- CONNECTIVITY & NETWORKING -->
+<div class="section-label">04 — Connectivity, Bandwidth &amp; Networking</div>
+<table class="comp-table">
+  <thead>
+    <tr>
+      <th>Aspect</th>
+      <th class="th-ptz">A — 4× PTZ</th>
+      <th class="th-colorvu">B — 4× ColorVu Fixed</th>
+      <th class="th-hybrid">C — Hybrid (2+2)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="aspect">LAN bandwidth per camera</td>
+      <td class="cell">
+        <span class="tag neutral">2–4 Mbps (H.265+)</span>
+        <span class="cell-detail">2MP at full 30fps with H.265+ compression. Increases if zoomed to high detail on moving subject.</span>
+      </td>
+      <td class="cell">
+        <span class="tag warn">4–8 Mbps (H.265+)</span>
+        <span class="cell-detail">4MP produces roughly double the data of 2MP. Still very manageable on local LAN (Gigabit switch handles it easily).</span>
+      </td>
+      <td class="cell">
+        <span class="tag neutral">~18–28 Mbps total (4 cameras)</span>
+        <span class="cell-detail">2× PTZ at ~3 Mbps + 2× ColorVu at ~6 Mbps = ~18–28 Mbps total local LAN. Well within Gigabit switch capacity.</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="aspect">Uplink to cloud (4G usage)</td>
+      <td class="cell" colspan="3">
+        <span class="tag good">Same for all systems — minimal</span>
+        <span class="cell-detail">As established earlier: raw video stays on-site. The Mac Mini processes locally and sends only detection event JSON (~text) to cloud. 4G data consumption is &lt;5GB/month for all three systems. The camera system type does not affect 4G usage.</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="aspect">PoE power budget (mast switch)</td>
+      <td class="cell">
+        <span class="tag bad">High: ~120W total</span>
+        <span class="cell-detail">4× PTZ at 30W each = 120W. Need a PoE+ switch with ≥120W power budget at mast base. These are more expensive switches.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Low: ~48W total</span>
+        <span class="cell-detail">4× ColorVu at ~12W each = 48W. Standard 8-port PoE switch (65W budget) is sufficient. Common and cheap.</span>
+      </td>
+      <td class="cell">
+        <span class="tag neutral">Medium: ~84W total</span>
+        <span class="cell-detail">2× PTZ (60W) + 2× ColorVu (24W) = 84W. Need a PoE+ switch with ≥100W budget. Moderately priced switches handle this.</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="aspect">NVR / recording requirements</td>
+      <td class="cell">
+        <span class="tag neutral">8-ch PoE+ NVR</span>
+        <span class="cell-detail">Needs NVR with PoE+ ports (802.3at). DS-7608NI-K2/8P qualifies. Must confirm NVR's PTZ control protocol is compatible (PELCO-D/PELCO-P or Hikvision native).</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">8-ch standard PoE NVR</span>
+        <span class="cell-detail">Any Hikvision PoE NVR works. Simpler setup — no PTZ protocol configuration needed. Plug and play.</span>
+      </td>
+      <td class="cell">
+        <span class="tag neutral">8-ch PoE+ NVR</span>
+        <span class="cell-detail">Same NVR as System A covers both camera types. PTZ control configured for 2 channels. ColorVu channels are plug-and-play.</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="aspect">RTSP integration (Mac Mini)</td>
+      <td class="cell">
+        <span class="tag warn">More complex</span>
+        <span class="cell-detail">4 RTSP streams + PTZ control API (HTTP/CGI commands). Mac Mini must manage both video pull and PTZ direction commands. More moving parts in FastAPI backend.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Simple</span>
+        <span class="cell-detail">4 static RTSP streams. No PTZ control logic needed. Mac Mini just pulls streams and runs YOLO. Clean, simple backend code.</span>
+      </td>
+      <td class="cell">
+        <span class="tag neutral">Medium complexity</span>
+        <span class="cell-detail">2 static RTSP streams for AI inference + 2 PTZ streams with optional automated positioning via HTTP commands. Can trigger PTZ preset when YOLO fires an alert.</span>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- EXPERTISE & MAINTAINABILITY -->
+<div class="section-label">05 — Installation Expertise &amp; Maintainability</div>
+<table class="comp-table">
+  <thead>
+    <tr>
+      <th>Aspect</th>
+      <th class="th-ptz">A — 4× PTZ</th>
+      <th class="th-colorvu">B — 4× ColorVu Fixed</th>
+      <th class="th-hybrid">C — Hybrid (2+2)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="aspect">Installation complexity</td>
+      <td class="cell">
+        <span class="tag warn">High</span>
+        <span class="cell-detail">PTZ cameras need precise mounting angle, preset programming, patrol configuration, IP addressing, PoE+ verification. Requires experienced CCTV technician familiar with speed dome setup. Estimated 2–3 days labour.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Low–Medium</span>
+        <span class="cell-detail">Turret cameras are point-and-mount. Plug into PoE switch — NVR auto-discovers via plug-and-play. Basic network knowledge sufficient. Estimated 1 day labour.</span>
+      </td>
+      <td class="cell">
+        <span class="tag warn">Medium–High</span>
+        <span class="cell-detail">ColorVu half is simple. PTZ half needs technician competency. Combined system needs careful planning of which ports/channels serve which purpose. Estimated 1.5–2 days labour.</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="aspect">Ongoing maintenance</td>
+      <td class="cell">
+        <span class="tag warn">Higher</span>
+        <span class="cell-detail">PTZ motors and gears have moving parts — potential failure point over time especially in dusty construction environment. Periodic preset recalibration needed. Firmware updates for PTZ-specific features.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Low</span>
+        <span class="cell-detail">No moving parts. Fixed optics. LED replacement is the main wear item (LEDs rated ~30,000hrs). Set and forget for months at a time.</span>
+      </td>
+      <td class="cell">
+        <span class="tag neutral">Medium</span>
+        <span class="cell-detail">PTZ units require more attention. ColorVu units are maintenance-free. Plan for PTZ servicing schedule, ColorVu is trouble-free.</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="aspect">Firmware & software</td>
+      <td class="cell">
+        <span class="tag warn">More complex</span>
+        <span class="cell-detail">PTZ preset management, patrol paths, auto-tracking AI settings (built-in to camera). Two layers of software: NVR + camera-level PTZ logic. Can conflict with your external YOLO system if auto-tracking is also enabled on-camera.</span>
+        <span class="cell-note">Disable camera's own smart tracking if using external YOLO — otherwise two tracking systems fight each other.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Simple</span>
+        <span class="cell-detail">No camera-level intelligence to configure. Stream is passive. All AI logic lives in your Mac Mini/FastAPI backend. Clean separation of concerns.</span>
+      </td>
+      <td class="cell">
+        <span class="tag neutral">Medium</span>
+        <span class="cell-detail">Same caveat — disable PTZ auto-tracking. Use PTZ presets triggered by your backend system instead of the camera's own tracking AI.</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="aspect">Expertise level required</td>
+      <td class="cell">
+        <span class="tag warn">Senior CCTV technician</span>
+        <span class="cell-detail">PTZ setup, preset programming, patrol configuration, PoE+ verification, dome removal for maintenance — needs experienced professional. Not DIY-friendly.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Junior/mid technician</span>
+        <span class="cell-detail">Most CCTV installers in Nairobi handle turret IP cameras routinely. Iken, Hubtech, Hikvision Shop Kenya all have competent installation teams familiar with this gear.</span>
+      </td>
+      <td class="cell">
+        <span class="tag warn">Senior technician for PTZ portion</span>
+        <span class="cell-detail">Recommend using a qualified team for the full installation. PTZ setup is the specialist component — ColorVu setup is trainable.</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="aspect">Camera failure impact</td>
+      <td class="cell">
+        <span class="tag bad">High per failure</span>
+        <span class="cell-detail">Each PTZ covers one quadrant. If one fails, that full quadrant loses all surveillance — no fallback. Full 25% coverage loss immediately.</span>
+      </td>
+      <td class="cell">
+        <span class="tag neutral">Medium per failure</span>
+        <span class="cell-detail">Adjacent cameras' FOVs partially overlap at mast centre. A single failure loses dedicated quadrant coverage but overlap provides partial fallback.</span>
+      </td>
+      <td class="cell">
+        <span class="tag good">Resilient</span>
+        <span class="cell-detail">If a PTZ fails, the paired ColorVu on the same side maintains AI detection coverage. PTZ failure reduces response capability but not core detection. Best fault tolerance.</span>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- PRICE BREAKDOWN -->
+<div class="section-label">06 — Cost Breakdown (Nairobi Market, Ksh excl. VAT)</div>
+<div class="price-grid">
+  <div class="price-card ptz">
+    <div class="price-card-header">System A — 4× PTZ Only</div>
+    <div class="price-line"><span class="price-line-label">DS-2DE4225IW-DE (T5) PTZ</span><span class="price-line-qty">×4</span><span class="price-line-amount">~224,000</span></div>
+    <div class="price-line"><span class="price-line-label">8-ch PoE+ NVR (DS-7608NI-K2/8P)</span><span class="price-line-qty">×1</span><span class="price-line-amount">~55,000</span></div>
+    <div class="price-line"><span class="price-line-label">2TB HDD storage</span><span class="price-line-qty">×2</span><span class="price-line-amount">~18,000</span></div>
+    <div class="price-line"><span class="price-line-label">8-port PoE+ switch (mast box)</span><span class="price-line-qty">×1</span><span class="price-line-amount">~18,000</span></div>
+    <div class="price-line"><span class="price-line-label">Outdoor Cat6 cable (305m roll)</span><span class="price-line-qty">×1</span><span class="price-line-amount">~9,000</span></div>
+    <div class="price-line"><span class="price-line-label">Steel mast (10m lattice)</span><span class="price-line-qty">×1</span><span class="price-line-amount">~35,000</span></div>
+    <div class="price-line"><span class="price-line-label">Weatherproof switch enclosure</span><span class="price-line-qty">×1</span><span class="price-line-amount">~6,000</span></div>
+    <div class="price-line"><span class="price-line-label">Armoured trunking / conduit</span><span class="price-line-qty">lot</span><span class="price-line-amount">~12,000</span></div>
+    <div class="price-line"><span class="price-line-label">Installation labour</span><span class="price-line-qty">3 days</span><span class="price-line-amount">~30,000</span></div>
+    <div class="price-total"><span class="price-total-label">Total Estimate</span><span class="price-total-amount">~407,000</span></div>
+  </div>
+
+  <div class="price-card colorvu">
+    <div class="price-card-header">System B — 4× ColorVu Fixed</div>
+    <div class="price-line"><span class="price-line-label">DS-2CD2347G2-L(U) 4MP ColorVu</span><span class="price-line-qty">×4</span><span class="price-line-amount">~84,000</span></div>
+    <div class="price-line"><span class="price-line-label">8-ch PoE NVR (DS-7608NI-K2/8P)</span><span class="price-line-qty">×1</span><span class="price-line-amount">~55,000</span></div>
+    <div class="price-line"><span class="price-line-label">2TB HDD storage</span><span class="price-line-qty">×2</span><span class="price-line-amount">~18,000</span></div>
+    <div class="price-line"><span class="price-line-label">8-port PoE switch (mast box)</span><span class="price-line-qty">×1</span><span class="price-line-amount">~9,000</span></div>
+    <div class="price-line"><span class="price-line-label">Outdoor Cat6 cable (305m roll)</span><span class="price-line-qty">×1</span><span class="price-line-amount">~9,000</span></div>
+    <div class="price-line"><span class="price-line-label">Steel mast (10m lattice)</span><span class="price-line-qty">×1</span><span class="price-line-amount">~35,000</span></div>
+    <div class="price-line"><span class="price-line-label">Weatherproof switch enclosure</span><span class="price-line-qty">×1</span><span class="price-line-amount">~6,000</span></div>
+    <div class="price-line"><span class="price-line-label">Armoured trunking / conduit</span><span class="price-line-qty">lot</span><span class="price-line-amount">~12,000</span></div>
+    <div class="price-line"><span class="price-line-label">Installation labour</span><span class="price-line-qty">1 day</span><span class="price-line-amount">~12,000</span></div>
+    <div class="price-total"><span class="price-total-label">Total Estimate</span><span class="price-total-amount">~240,000</span></div>
+  </div>
+
+  <div class="price-card hybrid">
+    <div class="price-card-header">System C — Hybrid 2+2 (Recommended)</div>
+    <div class="price-line"><span class="price-line-label">DS-2DE4225IW-DE (T5) PTZ</span><span class="price-line-qty">×2</span><span class="price-line-amount">~112,000</span></div>
+    <div class="price-line"><span class="price-line-label">DS-2CD2347G2-L(U) 4MP ColorVu</span><span class="price-line-qty">×2</span><span class="price-line-amount">~42,000</span></div>
+    <div class="price-line"><span class="price-line-label">8-ch PoE+ NVR (DS-7608NI-K2/8P)</span><span class="price-line-qty">×1</span><span class="price-line-amount">~55,000</span></div>
+    <div class="price-line"><span class="price-line-label">2TB HDD storage</span><span class="price-line-qty">×2</span><span class="price-line-amount">~18,000</span></div>
+    <div class="price-line"><span class="price-line-label">8-port PoE+ switch (mast box)</span><span class="price-line-qty">×1</span><span class="price-line-amount">~18,000</span></div>
+    <div class="price-line"><span class="price-line-label">Outdoor Cat6 cable (305m roll)</span><span class="price-line-qty">×1</span><span class="price-line-amount">~9,000</span></div>
+    <div class="price-line"><span class="price-line-label">Steel mast (10m lattice)</span><span class="price-line-qty">×1</span><span class="price-line-amount">~35,000</span></div>
+    <div class="price-line"><span class="price-line-label">Weatherproof switch enclosure</span><span class="price-line-qty">×1</span><span class="price-line-amount">~6,000</span></div>
+    <div class="price-line"><span class="price-line-label">Armoured trunking / conduit</span><span class="price-line-qty">lot</span><span class="price-line-amount">~12,000</span></div>
+    <div class="price-line"><span class="price-line-label">Installation labour</span><span class="price-line-qty">2 days</span><span class="price-line-amount">~22,000</span></div>
+    <div class="price-total"><span class="price-total-label">Total Estimate</span><span class="price-total-amount">~329,000</span></div>
+  </div>
+</div>
+
+<!-- VERDICT -->
+<div class="section-label">07 — Verdict &amp; Recommendation</div>
+<div class="verdict-grid">
+  <div class="verdict-card">
+    <h4>System A — PTZ Only</h4>
+    <p>Best for sites where a human operator is watching screens and manually directing cameras. The 25× zoom is a genuine forensic tool. However it underserves AI-driven pipelines — variable FOV, B&W nights, and high cost make it a poor primary choice for autonomous detection. Consider it only if your primary use case is active human-monitored security, not automated PPE/headcount analytics.</p>
+  </div>
+  <div class="verdict-card recommended">
+    <div class="recommended-badge">Recommended for your use case</div>
+    <h4>System C — Hybrid 2+2</h4>
+    <p>Gives your YOLO model stable colour streams 24/7 (ColorVu), while preserving 25× zoom capability for investigation and manual oversight (PTZ). When AI fires an alert, your backend can auto-direct a PTZ to the GPS coordinates of the event for confirmation. Best fault tolerance — a single camera failure doesn't blind the AI. Mid-range cost. Matches your stated use case precisely: AI detection + human response capability.</p>
+  </div>
+  <div class="verdict-card">
+    <h4>System B — ColorVu Only</h4>
+    <p>Best value, simplest install, best AI detection performance, best maintainability. If budget is the primary constraint and remote human zoom-in is not required, this is the cleanest solution. The limitation is losing the ability to zoom in on a specific person or vehicle at distance — you rely entirely on what the fixed wide-angle frame shows. For AI-only workflows with no active human operator, this is actually the optimal choice.</p>
+  </div>
+</div>
+
+<div class="footnote">
+  * All prices are estimates based on Nairobi market data (Iken Computers, Hikvision Shop Kenya, Hubtech, Techyshop) as of early 2025. Prices exclude 16% VAT. 
+  Mast cost (Ksh 35,000) is for fabricated lattice steel — concrete foundation and erection labour estimated separately.
+  Cat6 outdoor cable roll (305m) priced at ~Ksh 9,000–11,000 for pure copper outdoor UV-rated.
+  PTZ unit price ~Ksh 56,000 each based on Hikvision Shop Kenya listing for DS-2DE4225IW-DE (T5). ColorVu unit ~Ksh 21,000 each (DS-2CD2347G2-LU).
+  NVR DS-7608NI-K2/8P estimated at ~Ksh 55,000 based on regional pricing; verify current stock with authorized Hikvision dealers.
+</div>
+
+</body>
+</html>
