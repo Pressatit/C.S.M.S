@@ -12,20 +12,28 @@ from database import get_db
 
 
 
-App=FastAPI(
+app=FastAPI(
     title="CSMS_backend",
     description="This is the heart to the robust CSMS",
     version="1.0.0"
-    )
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5174", "http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 models.Base.metadata.create_all(engine)
 
 
-@App.get("/health")
+@app.get("/health")
 def check_health(db :Session =Depends(get_db)):
     result =db.execute(text('SELECT 1'))
     return{"status":"Connected"}
 
-App.include_router(users.router)
+app.include_router(users.router)
 
 

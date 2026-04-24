@@ -1,4 +1,4 @@
-import {useLocation} from "react-router-dom"
+import {useLocation, Link} from "react-router-dom"
 import {Radio,PlayCircle,HardHat,BarChart3,Truck,Bot,User,Construction,Bell} from "lucide-react"
 
 import { NAV_ITEMS } from "../../config/navigation"
@@ -32,12 +32,12 @@ export function Topbar({alertCount=0}:Topbarprops){
                         <Bell size ={18} strokeWidth={.5}/>
                         {alertCount > 0 && <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full"/>}
                     </button>
-                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100">
+                    <Link to="/profile" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100">
                         <div className="w-7 h-7 rounded-full bg-gray-300 flex items-center justify-center">
                             <User size={14} className="text-gray-500" strokeWidth={.5}/>
                         </div>
                         <span className="text-sm text-gray-700 font-medium">Profile</span>
-                    </button>
+                    </Link>
                 </div>
             </div>
         </header>
