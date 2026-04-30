@@ -3,6 +3,9 @@
 import { useState } from "react"
 import { useNavigate, Navigate, Link } from "react-router-dom"
 import { Construction, Eye, EyeOff, LogIn } from "lucide-react"
+import { Meta } from "react-router-dom"
+
+const API_BASE = "http://192.168.5.142:8000";
 
 interface LoginResponse {
   access_token: string
@@ -26,7 +29,7 @@ export function Login() {
   const isAuthenticated = !!localStorage.getItem("token")
 
   if (isAuthenticated) {
-    return <Navigate to="/profile" replace />
+    return <Navigate to="/live" replace />
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,7 +38,7 @@ export function Login() {
     setLoading(true)
 
     try {
-      const response = await fetch("http://localhost:8000/login", {
+      const response = await fetch(`${API_BASE}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -49,7 +52,7 @@ export function Login() {
 
       localStorage.setItem("token", data.access_token)
       localStorage.setItem("user", JSON.stringify(data.user))
-      navigate("/profile")
+      navigate("/live")
     } catch (err) {
       setError("Invalid email or password")
     } finally {

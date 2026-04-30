@@ -16,7 +16,9 @@ from routers import detections
 from routers import ble_positions
 
 
-app = FastAPI(
+
+app=FastAPI(
+    root_path="/",
     title="CSMS_backend",
     description="This is the heart of the robust CSMS",
     version="1.0.0"
@@ -26,10 +28,7 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:5174"
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

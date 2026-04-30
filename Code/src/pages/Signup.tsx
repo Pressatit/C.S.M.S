@@ -4,6 +4,11 @@ import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { Construction, Eye, EyeOff, UserPlus } from "lucide-react"
 
+import { Meta } from "react-router-dom"
+
+
+const API_BASE = "http://192.168.5.142:8000";
+
 interface RegisterResponse {
   access_token: string
   token_type: string
@@ -29,9 +34,9 @@ export function Signup() {
     e.preventDefault()
     setError("")
     setLoading(true)
-
+ 
     try {
-      const response = await fetch("http://localhost:8000/register", {
+      const response = await fetch(`${API_BASE}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password, role }),
@@ -41,11 +46,12 @@ export function Signup() {
 
       if (!response.ok) {
         throw new Error(data.access_token || "Registration failed")
+
       }
 
       localStorage.setItem("token", data.access_token)
       localStorage.setItem("user", JSON.stringify(data.user))
-      navigate("/profile")
+      navigate("/live")
     } catch (err) {
       setError("Registration failed. Email may already be in use.")
     } finally {
@@ -116,8 +122,8 @@ export function Signup() {
                 onChange={(e) => setRole(e.target.value)}
                 className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-colors"
               >
-                <option value="supervisor">Supervisor</option>
-                <option value="manager">Manager</option>
+                <option value="manager">Site manager</option>
+                <option value="investor">Investor</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
