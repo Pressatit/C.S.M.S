@@ -5,7 +5,7 @@ import { useNavigate, Navigate, Link } from "react-router-dom"
 import { Construction, Eye, EyeOff, LogIn } from "lucide-react"
 import { Meta } from "react-router-dom"
 
-const API_BASE = "http://192.168.5.142:8000";
+const API_BASE = "http://localhost:8000";
 
 interface LoginResponse {
   access_token: string

@@ -7,8 +7,7 @@ import { Construction, Eye, EyeOff, UserPlus } from "lucide-react"
 import { Meta } from "react-router-dom"
 
 
-const API_BASE = "http://192.168.5.142:8000";
-
+const API_BASE = "http://localhost:8000";
 interface RegisterResponse {
   access_token: string
   token_type: string

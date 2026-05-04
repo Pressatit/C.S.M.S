@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "hls.js": "^1.6.16"
+  },
+  "devDependencies": {
+    "@types/hls.js": "^0.13.3"
+  }
+}
