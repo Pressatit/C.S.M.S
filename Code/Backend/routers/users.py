@@ -30,11 +30,18 @@ def create_access_token(data: dict) -> str:
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 @router.post("/register", response_model=schemas.TokenResponse)
-def register(request: schemas.users, db :Session = Depends(get_db)):
+def register(request: schemas.users, db: Session = Depends(get_db)):
+    # 1. Validation: Ensure email isn't empty
+    if not request.email:
+        raise HTTPException(status_code=400, detail="Email is required")
+
+    # 2. Check existence
     existing_user = db.query(models.User).filter(models.User.email == request.email).first()
     if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    
+        # Log this to your terminal so you can see WHICH email is causing the hit
+        print(f"Conflict: Email {request.email} already exists in DB") 
+        raise HTTPException(status_code=400, detail=f"User with {request.email} already exists")
+  
     hashed_password = get_password_hash(request.password)
     query=models.User(
         name=request.name,

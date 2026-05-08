@@ -15,18 +15,12 @@ from routers import telematics
 from routers import detections
 from routers import ble_positions
 
-
-
-
-
-
 app=FastAPI(
     root_path="/",
     title="CSMS_backend",
     description="This is the heart of the robust CSMS",
     version="1.0.0"
 )
-
 
 # CORS
 app.add_middleware(

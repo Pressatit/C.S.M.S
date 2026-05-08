@@ -1,5 +1,23 @@
-/CSMS
-/Code/node_modules
-/Code/Backend/.env
-/Code/Backend/--pycache--
-/DS_STORE
+# Environment variables
+.env
+**/.env
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Database dumps
+*.sql
+
+# Node modules
+node_modules/
+**/node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temp files
+~$*
