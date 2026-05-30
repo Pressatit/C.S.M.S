@@ -8,4 +8,8 @@ export default defineConfig({
     tailwindcss(),
 
   ],
+  server: {
+    //  expose on your local network 
+    host: true,
+  }
 })

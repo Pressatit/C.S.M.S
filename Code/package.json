@@ -14,7 +14,11 @@
     "autoprefixer": "^10.5.0",
     "postcss": "^8.5.10",
     "tailwindcss": "^4.2.2",
+<<<<<<< HEAD
     "typescript": "^5.9.3",
+=======
+    "typescript": "^6.0.3",
+>>>>>>> 5fcb42224b01095eea7c189df3079dd79ac3d4fb
     "vite": "^8.0.9"
   },
   "scripts": {

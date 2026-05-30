@@ -87,8 +87,33 @@ def get_or_create_profile(db: Session, user_id: str, email: str, user_metadata: 
     return create_or_update_profile(db, user_id, email, name, role)
 
 @router.post("/register", response_model=schemas.TokenResponse)
+<<<<<<< HEAD
 def register(request: schemas.users, db :Session = Depends(get_db)):
     validate_password_strength(request.password)
+=======
+def register(request: schemas.users, db: Session = Depends(get_db)):
+    # 1. Validation: Ensure email isn't empty
+    if not request.email:
+        raise HTTPException(status_code=400, detail="Email is required")
+
+    # 2. Check existence
+    existing_user = db.query(models.User).filter(models.User.email == request.email).first()
+    if existing_user:
+        # Log this to your terminal so you can see WHICH email is causing the hit
+        print(f"Conflict: Email {request.email} already exists in DB") 
+        raise HTTPException(status_code=400, detail=f"User with {request.email} already exists")
+  
+    hashed_password = get_password_hash(request.password)
+    query=models.User(
+        name=request.name,
+        role=request.role or "user",
+        email=request.email,
+        password=hashed_password
+    )
+    db.add(query)
+    db.commit()
+    db.refresh(query)
+>>>>>>> 5fcb42224b01095eea7c189df3079dd79ac3d4fb
 
     existing_profile = db.query(models.Profile).filter(models.Profile.email == request.email).first()
     if existing_profile:
