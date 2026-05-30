@@ -13,7 +13,7 @@ export function Shell(){
             
             <div className="flex-1 flex flex-col min-w-0">
                 <Topbar/>
-                <main className="flex-1 overflow-y-auto" >
+                <main className="flex-1 overflow-y-auto min-w-0" >
 
                     <Outlet/> {/*Current page renders here */}
                     

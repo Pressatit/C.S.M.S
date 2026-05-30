@@ -49,8 +49,8 @@ export function EmployeeManagement(){
         <div className="p-6">
             <h1 className="text-xl font-semibold text-gray-800 mb-1">Employee Management</h1>
             <p className="text-sm text-gray-500">Site Employee Records,Employee Attendance records and BLE tracking</p>
-            <div className="mt-6 grid grid-cols-2 gap-4">
-                {modules.map(m=>(<div key={m.label} className={`${m.color} rounded-xl p-6 cursor-pointer hover:opacity-90 h-48 flex items-end`}>
+            <div className="mt-6 flex flex-wrap gap-4">
+                {modules.map(m=>(<div key={m.label} className={`${m.color} min-w-[240px] flex-1 rounded-xl p-6 cursor-pointer hover:opacity-90 h-48 flex items-end`}>
                     <span className="text-sm font-medium text-white">{m.label}</span>
                 </div>
             ))}
@@ -60,4 +60,3 @@ export function EmployeeManagement(){
        
     )
 }
-

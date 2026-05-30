@@ -2,17 +2,52 @@
 
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { Construction, Eye, EyeOff, UserPlus } from "lucide-react"
+import { Check, Construction, Eye, EyeOff, KeyRound, UserPlus, X } from "lucide-react"
 
 interface RegisterResponse {
   access_token: string
   token_type: string
+  detail?: string
   user: {
-    id: number
+    id: string
     name: string
     email: string
     role: string
   }
+}
+
+const lowercaseChars = "abcdefghijklmnopqrstuvwxyz"
+const uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const numberChars = "0123456789"
+const symbolChars = "!@#$%^&*"
+const passwordChars = lowercaseChars + uppercaseChars + numberChars + symbolChars
+
+function secureRandomIndex(max: number) {
+  const values = new Uint32Array(1)
+  crypto.getRandomValues(values)
+  return values[0] % max
+}
+
+function generateStrongPassword() {
+  const requiredChars = [
+    lowercaseChars[secureRandomIndex(lowercaseChars.length)],
+    uppercaseChars[secureRandomIndex(uppercaseChars.length)],
+    numberChars[secureRandomIndex(numberChars.length)],
+    symbolChars[secureRandomIndex(symbolChars.length)],
+  ]
+
+  while (requiredChars.length < 8) {
+    requiredChars.push(passwordChars[secureRandomIndex(passwordChars.length)])
+  }
+
+  for (let index = requiredChars.length - 1; index > 0; index -= 1) {
+    const swapIndex = secureRandomIndex(index + 1)
+    const current = requiredChars[index]
+    requiredChars[index] = requiredChars[swapIndex]
+    requiredChars[swapIndex] = current
+  }
+
+  return requiredChars.join("")
 }
 
 export function Signup() {
@@ -24,10 +59,29 @@ export function Signup() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const passwordChecks = [
+    { label: "8 characters", passed: password.length >= 8 },
+    { label: "Uppercase letter", passed: /[A-Z]/.test(password) },
+    { label: "Lowercase letter", passed: /[a-z]/.test(password) },
+    { label: "Number", passed: /\d/.test(password) },
+    { label: "Symbol", passed: /[^A-Za-z0-9]/.test(password) },
+  ]
+  const isPasswordStrong = passwordChecks.every((check) => check.passed)
+
+  const handleGeneratePassword = () => {
+    setPassword(generateStrongPassword())
+    setShowPassword(true)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+
+    if (!isPasswordStrong) {
+      setError("Password must be 8 characters and include uppercase, lowercase, number, and symbol.")
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -40,14 +94,14 @@ export function Signup() {
       const data: RegisterResponse = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.access_token || "Registration failed")
+        throw new Error(data.detail || "Registration failed")
       }
 
       localStorage.setItem("token", data.access_token)
       localStorage.setItem("user", JSON.stringify(data.user))
       navigate("/profile")
     } catch (err) {
-      setError("Registration failed. Email may already be in use.")
+      setError(err instanceof Error ? err.message : "Registration failed. Email may already be in use.")
     } finally {
       setLoading(false)
     }
@@ -123,9 +177,19 @@ export function Signup() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Password
-              </label>
+              <div className="mb-1.5 flex items-center justify-between gap-3">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={handleGeneratePassword}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  <KeyRound size={14} />
+                  <span>Generate</span>
+                </button>
+              </div>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -133,9 +197,10 @@ export function Signup() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={8}
+                  maxLength={8}
                   className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-colors pr-10"
-                  placeholder="Minimum 6 characters"
+                  placeholder="8 strong characters"
                 />
                 <button
                   type="button"
@@ -145,11 +210,24 @@ export function Signup() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {passwordChecks.map((check) => (
+                  <div
+                    key={check.label}
+                    className={`flex items-center gap-1.5 text-xs ${
+                      check.passed ? "text-green-700" : "text-gray-500"
+                    }`}
+                  >
+                    {check.passed ? <Check size={14} /> : <X size={14} />}
+                    <span>{check.label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !isPasswordStrong}
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-800 hover:bg-gray-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-md transition-colors"
             >
               {loading ? (

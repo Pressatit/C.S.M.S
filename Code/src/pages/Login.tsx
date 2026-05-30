@@ -7,8 +7,9 @@ import { Construction, Eye, EyeOff, LogIn } from "lucide-react"
 interface LoginResponse {
   access_token: string
   token_type: string
+  detail?: string
   user: {
-    id: number
+    id: string
     name: string
     email: string
     role: string
@@ -44,14 +45,14 @@ export function Login() {
       const data: LoginResponse = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.access_token || "Invalid credentials")
+        throw new Error(data.detail || "Invalid credentials")
       }
 
       localStorage.setItem("token", data.access_token)
       localStorage.setItem("user", JSON.stringify(data.user))
       navigate("/profile")
     } catch (err) {
-      setError("Invalid email or password")
+      setError(err instanceof Error ? err.message : "Invalid email or password")
     } finally {
       setLoading(false)
     }

@@ -13,14 +13,14 @@ interface SidebarProps{
 export function Sidebar({isCollapsed,onToggle} :SidebarProps){
  const location = useLocation()
  return(
-    <aside className={`flex flex-col h-screen bg-gray-100 border-r border-gray-200 transition-all duration-300 ease-in-out flex-shrink-0 overflow-visible ${isCollapsed ? "w-16" : "w-64"}`}>
+    <aside className={`flex h-screen flex-col bg-gray-100 border-r border-gray-200 transition-all duration-300 ease-in-out flex-shrink-0 overflow-visible ${isCollapsed ? "w-16" : "w-64"}`}>
       <div className="flex items-center justify-between px-4 py-5 border-b border-gray-200">
         {!isCollapsed && (
-            <div className=" flex items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2">
                 <Construction size={20} className="text-gray-700" strokeWidth={1.5}/>
-                <div>
+                <div className="min-w-0">
                     <p className="text-sm font-semibold text-gray-800 leading-none">CSMS</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Construction Site Management System</p>
+                    <p className="mt-0.5 text-xs text-gray-500 truncate">Construction Site Management System</p>
                 </div>
             </div>
         )}
@@ -42,10 +42,10 @@ export function Sidebar({isCollapsed,onToggle} :SidebarProps){
              return(
                 <NavLink key ={item.path} to ={item.path} 
                 className={({isActive: a})=>
-                `flex items-center rounded lg transition-colors duration-150 text-sm font-medium ${isCollapsed ? "justify-center px-2 py-2.5": "gap-3 px-3 py-2.5"} ${a? "bg-white text-gray-900 shadow-sm":"text-gray-600 hover:bg-gray-200"}`}>
+                `flex items-center rounded-lg transition-colors duration-150 text-sm font-medium ${isCollapsed ? "justify-center px-2 py-2.5": "gap-3 px-3 py-2.5"} ${a? "bg-white text-gray-900 shadow-sm":"text-gray-600 hover:bg-gray-200"}`}>
                     {Icon && <Icon size={18} strokeWidth={1.5} className={isActive ?"text-gray-900":"text-gray-500"} />}
                  {!isCollapsed && (
-                    <span className= "whitespace-nowrap">{item.label}</span>
+                    <span className= "truncate">{item.label}</span>
                  )}
                  {isCollapsed && (
                      <div className="absolute left-full ml-2 ml-3 top -1/2 -translate-y-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-[999] opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none">
@@ -60,7 +60,7 @@ export function Sidebar({isCollapsed,onToggle} :SidebarProps){
      {isCollapsed && (
         <div className="p-2 border-t border-gray-200">
             <button onClick={onToggle}
-            className="w-full flex justify-center p-2 rounded-lg hover: bg-gray-200 text-gray-500">
+            className="w-full flex justify-center p-2 rounded-lg hover:bg-gray-200 text-gray-500">
                 <ChevronRight size={16}/>
             </button>
         </div>

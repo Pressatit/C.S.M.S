@@ -3,8 +3,6 @@ uvicorn
 psycopg2-binary
 sqlalchemy
 asyncpg
-bcrypt
-passlib
-python-jose
 python-multipart
 python-dotenv
+supabase

@@ -4,91 +4,210 @@ from sqlalchemy.orm import Session
 from fastapi import APIRouter,HTTPException,Depends
 from database import get_db
 from typing import List
-import bcrypt
-from jose import JWTError, jwt
-from datetime import datetime, timedelta
 import os
+from uuid import UUID
+from supabase import Client, create_client
 
 router=APIRouter(
 
 )
 
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY") or os.getenv("SUPABASE_PUBLISHABLE_KEY")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+if not SUPABASE_URL or not SUPABASE_ANON_KEY:
+    raise RuntimeError("SUPABASE_URL and SUPABASE_ANON_KEY must be configured")
 
-def get_password_hash(password: str) -> str:
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+admin_supabase: Client | None = (
+    create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    if SUPABASE_SERVICE_ROLE_KEY
+    else None
+)
 
-def create_access_token(data: dict) -> str:
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+def auth_error_detail(exc: Exception) -> str:
+    return getattr(exc, "message", None) or str(exc)
+
+def validate_password_strength(password: str) -> None:
+    checks = [
+        (len(password) >= 8, "be at least 8 characters"),
+        (any(char.islower() for char in password), "include a lowercase letter"),
+        (any(char.isupper() for char in password), "include an uppercase letter"),
+        (any(char.isdigit() for char in password), "include a number"),
+        (any(not char.isalnum() for char in password), "include a symbol"),
+    ]
+    missing = [message for passed, message in checks if not passed]
+    if missing:
+        raise HTTPException(
+            status_code=400,
+            detail="Password must " + ", ".join(missing) + "."
+        )
+
+def build_user_response(profile: models.Profile) -> schemas.showUser:
+    return schemas.showUser(
+        id=str(profile.id),
+        name=profile.name,
+        role=profile.role,
+        email=profile.email
+    )
+
+def create_or_update_profile(db: Session, user_id: str, email: str, name: str, role: str) -> models.Profile:
+    profile_id = UUID(user_id)
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile:
+        profile = db.query(models.Profile).filter(models.Profile.email == email).first()
+
+    if profile:
+        profile.id = profile_id
+        profile.name = name or profile.name
+        profile.role = role or profile.role or "user"
+        profile.email = email
+    else:
+        profile = models.Profile(
+            id=profile_id,
+            name=name,
+            role=role or "user",
+            email=email
+        )
+        db.add(profile)
+
+    db.commit()
+    db.refresh(profile)
+    return profile
+
+def get_or_create_profile(db: Session, user_id: str, email: str, user_metadata: dict | None = None) -> models.Profile:
+    profile = db.query(models.Profile).filter(models.Profile.id == UUID(user_id)).first()
+    if profile:
+        return profile
+
+    metadata = user_metadata or {}
+    name = metadata.get("name") or email.split("@")[0]
+    role = metadata.get("role") or "user"
+    return create_or_update_profile(db, user_id, email, name, role)
 
 @router.post("/register", response_model=schemas.TokenResponse)
 def register(request: schemas.users, db :Session = Depends(get_db)):
-    existing_user = db.query(models.User).filter(models.User.email == request.email).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    
-    hashed_password = get_password_hash(request.password)
-    query=models.User(
-        name=request.name,
-        role=request.role or "user",
-        email=request.email,
-        password=hashed_password
-    )
-    db.add(query)
-    db.commit()
-    db.refresh(query)
+    validate_password_strength(request.password)
 
-    access_token = create_access_token({"sub": query.email, "user_id": query.id})
+    existing_profile = db.query(models.Profile).filter(models.Profile.email == request.email).first()
+    if existing_profile:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    try:
+        if admin_supabase:
+            created_user = admin_supabase.auth.admin.create_user({
+                "email": request.email,
+                "password": request.password,
+                "email_confirm": True,
+                "user_metadata": {
+                    "name": request.name,
+                    "role": request.role or "user"
+                }
+            })
+            if not created_user.user:
+                raise HTTPException(status_code=400, detail="Registration failed")
+
+            auth_response = supabase.auth.sign_in_with_password({
+                "email": request.email,
+                "password": request.password
+            })
+        else:
+            auth_response = supabase.auth.sign_up({
+                "email": request.email,
+                "password": request.password,
+                "options": {
+                    "data": {
+                        "name": request.name,
+                        "role": request.role or "user"
+                    }
+                }
+            })
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=auth_error_detail(exc))
+
+    if not auth_response.user:
+        raise HTTPException(status_code=400, detail="Registration failed")
+
+    if not auth_response.session:
+        raise HTTPException(
+            status_code=400,
+            detail="Registration created. Confirm the email before logging in."
+        )
+
+    profile = create_or_update_profile(
+        db,
+        auth_response.user.id,
+        auth_response.user.email or request.email,
+        request.name,
+        request.role or "user"
+    )
     
     return schemas.TokenResponse(
-        access_token=access_token,
-        user=schemas.showUser(
-            id=query.id,
-            name=query.name,
-            role=query.role,
-            email=query.email
-        )
+        access_token=auth_response.session.access_token,
+        refresh_token=auth_response.session.refresh_token,
+        user=build_user_response(profile)
     )
 
 @router.post("/login", response_model=schemas.TokenResponse)
 def login(request: schemas.LoginRequest, db :Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == request.email).first()
-    
-    if not user or not verify_password(request.password, user.password):
+    try:
+        auth_response = supabase.auth.sign_in_with_password({
+            "email": request.email,
+            "password": request.password
+        })
+    except Exception as exc:
+        raise HTTPException(status_code=401, detail=auth_error_detail(exc))
+
+    if not auth_response.user or not auth_response.session:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-    access_token = create_access_token({"sub": user.email, "user_id": user.id})
+
+    profile = get_or_create_profile(
+        db,
+        auth_response.user.id,
+        auth_response.user.email or request.email,
+        auth_response.user.user_metadata
+    )
     
     return schemas.TokenResponse(
-        access_token=access_token,
-        user=schemas.showUser(
-            id=user.id,
-            name=user.name,
-            role=user.role,
-            email=user.email
-        )
+        access_token=auth_response.session.access_token,
+        refresh_token=auth_response.session.refresh_token,
+        user=build_user_response(profile)
     )
 
 @router.post("/user")
 def add_user(request: schemas.users, db :Session = Depends(get_db)):
-    hashed_password = get_password_hash(request.password)
-    query=models.User(name=request.name,role=request.role,email=request.email,password=hashed_password)
-    db.add(query)
-    db.commit()
-    db.refresh(query)
+    validate_password_strength(request.password)
 
-    return request
+    try:
+        auth_response = supabase.auth.sign_up({
+            "email": request.email,
+            "password": request.password,
+            "options": {
+                "data": {
+                    "name": request.name,
+                    "role": request.role or "user"
+                }
+            }
+        })
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=auth_error_detail(exc))
+
+    if not auth_response.user:
+        raise HTTPException(status_code=400, detail="User creation failed")
+
+    profile = create_or_update_profile(
+        db,
+        auth_response.user.id,
+        auth_response.user.email or request.email,
+        request.name,
+        request.role or "user"
+    )
+
+    return build_user_response(profile)
 
 @router.get("/user",response_model=List[schemas.showUser])
 def get_all_users(db:Session =Depends(get_db)):
-    users=db.query(models.User).all()
+    users=db.query(models.Profile).all()
 
     return users
