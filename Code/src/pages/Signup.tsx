@@ -98,12 +98,7 @@ export function Signup() {
       const data: RegisterResponse = await response.json()
 
       if (!response.ok) {
-<<<<<<< HEAD
         throw new Error(data.detail || "Registration failed")
-=======
-        throw new Error(data.access_token || "Registration failed")
-
->>>>>>> 5fcb42224b01095eea7c189df3079dd79ac3d4fb
       }
 
       localStorage.setItem("token", data.access_token)

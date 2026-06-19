@@ -22,18 +22,6 @@ export interface DetectionEvent{
 }
 
 export function Liveview(){
-<<<<<<< HEAD
-    return(
-        <div className="p-6">
-            <h1 className="text-xl font-semibold text-gray-800 mb-1" >Live View</h1>
-            <p className= "text-sm text-gray-500" >Real-time camera detection with AI detection overlay</p>
-            <div className ="mt-6 flex flex-wrap gap-3">
-                {["Camera 1","Camera 2","Camera 3","Camera 4","Camera 5","Camera 6"].map(cam =>(<div key={cam}className="min-w-[240px] flex-1 bg-black rounded-lg aspect-video flex items-center justify-center">
-                    <span className="text-gray-500 text-sm">{cam}</span>
-                    </div>
-                    ))}
-            </div>
-=======
     const[expandedId,setExpandedId]=useState<number |null>(null)
     
     const expandedCamera = cameras.find(c => c.id === expandedId)
@@ -52,7 +40,6 @@ export function Liveview(){
           <p className="text-xs text-gray-500">
             {cameras.length} cameras · All online
           </p>
->>>>>>> 5fcb42224b01095eea7c189df3079dd79ac3d4fb
         </div>
         {expandedId && (
           <button
