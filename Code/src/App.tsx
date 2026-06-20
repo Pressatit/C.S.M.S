@@ -11,10 +11,11 @@ import { AssetManagement } from "./pages/Asset"
 import { SiteProgress } from "./pages/Progress"
 import { ProjectAdvisor } from "./pages/Advisor"
 import { NotFound } from "./pages/NotFound"
+import { AuthProvider, useAuth } from "./contexts/AuthContext"
 
 function ProtectedLayout() {
-  const token = localStorage.getItem("token")
-  if (!token) {
+  const { isAuthenticated } = useAuth()
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }
   return <Outlet/>
@@ -23,29 +24,31 @@ function ProtectedLayout() {
 export default function App(){
     return(
         <BrowserRouter>
-          <Routes>
-            {/* Public routes - no auth required */}
-            <Route path="/login" element={<Login/>}/>
-            <Route path="/signup" element={<Signup/>}/>
-            
-            {/* Protected routes - auth required */}
-            <Route element={<ProtectedLayout/>}>
-              {/* Standalone pages - full page layout */}
-              <Route path="/profile" element={<Profile/>}/>
+          <AuthProvider>
+            <Routes>
+              {/* Public routes - no auth required */}
+              <Route path="/login" element={<Login/>}/>
+              <Route path="/signup" element={<Signup/>}/>
               
-              {/* App shell pages - with sidebar/topbar */}
-              <Route path="/" element={<Shell/>}>
-                 <Route index element={<Navigate to="/live" replace />}/>
-                 <Route path="live"       element={<Liveview/>}/>
-                 <Route path="playback"   element={<Playback/>}/>
-                 <Route path="employees"  element={<EmployeeManagement/>}/>
-                 <Route path="assets"     element={<AssetManagement/>}/>
-                 <Route path="progress"   element={<SiteProgress/>}/>
-                 <Route path="advisor"    element={<ProjectAdvisor/>}/>
-                 <Route path="*" element={<NotFound/>}/>
+              {/* Protected routes - auth required */}
+              <Route element={<ProtectedLayout/>}>
+                {/* Standalone pages - full page layout */}
+                <Route path="/profile" element={<Profile/>}/>
+                
+                {/* App shell pages - with sidebar/topbar */}
+                <Route path="/" element={<Shell/>}>
+                   <Route index element={<Navigate to="/live" replace />}/>
+                   <Route path="live"       element={<Liveview/>}/>
+                   <Route path="playback"   element={<Playback/>}/>
+                   <Route path="employees"  element={<EmployeeManagement/>}/>
+                   <Route path="assets"     element={<AssetManagement/>}/>
+                   <Route path="progress"   element={<SiteProgress/>}/>
+                   <Route path="advisor"    element={<ProjectAdvisor/>}/>
+                   <Route path="*" element={<NotFound/>}/>
+                </Route>
               </Route>
-            </Route>
-          </Routes>
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
     )
 

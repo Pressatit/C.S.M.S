@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 import models
 import schemas
 from database import get_db
+from auth import get_current_user
 
 router = APIRouter(
     prefix="/ble",
@@ -14,9 +15,9 @@ router = APIRouter(
 @router.post("/")
 def create_ble_position(
     request: schemas.BLEPositionCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
-    # Verify employee exists
     employee = db.query(
         models.Employee
     ).filter(
@@ -29,7 +30,6 @@ def create_ble_position(
             detail="Employee not found"
         )
 
-    # Insert position
     position = models.BLEPosition(
         employee_id=request.employee_id,
         x_meters=request.x_meters,
@@ -47,17 +47,19 @@ def create_ble_position(
 
 @router.get("/")
 def get_positions(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
     return db.query(
         models.BLEPosition
     ).all()
 
 
-@router.get("/employee/{employee_id}")  # Get employee positions
+@router.get("/employee/{employee_id}")
 def get_employee_positions(
     employee_id: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
     return db.query(
         models.BLEPosition
@@ -66,10 +68,11 @@ def get_employee_positions(
     ).all()
 
 
-@router.get("/latest/{employee_id}")  # Latest employee location
+@router.get("/latest/{employee_id}")
 def latest_position(
     employee_id: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
     record = db.query(
         models.BLEPosition
@@ -82,10 +85,11 @@ def latest_position(
     return record
 
 
-@router.delete("/{id}")  # Optional admin delete
+@router.delete("/{id}")
 def delete_position(
     id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
     position = db.query(
         models.BLEPosition

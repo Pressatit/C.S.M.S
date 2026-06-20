@@ -1,11 +1,7 @@
 from pydantic import BaseModel
-<<<<<<< HEAD
-from typing import Optional
-=======
 from typing import List,Optional,Dict
->>>>>>> 5fcb42224b01095eea7c189df3079dd79ac3d4fb
 
-class users(BaseModel):
+class RegisterRequest(BaseModel):
     name: str
     role: Optional[str]
     email: str
@@ -130,6 +126,9 @@ class DetectionEventResponse(BaseModel):
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
 
 class TokenResponse(BaseModel):
     access_token: str

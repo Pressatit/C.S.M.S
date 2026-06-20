@@ -4,15 +4,17 @@ from sqlalchemy.orm import Session
 import models
 import schemas
 from database import get_db
+from auth import get_current_user
 router = APIRouter(
     prefix="/employees",
     tags=["employees"]
 )
 
-@router.post("/")    ##POST
+@router.post("/")
 def create_employee(
     request: schemas.EmployeeCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
     employee = models.Employee(
         employee_id=request.employee_id,
@@ -30,9 +32,10 @@ def create_employee(
 
     return employee
 
-@router.get("/") ##GET
+@router.get("/")
 def get_employees(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
     employees = db.query(
         models.Employee
@@ -42,8 +45,9 @@ def get_employees(
 
 @router.get("/{id}")
 def get_employee(
-    id:int,
-    db:Session=Depends(get_db)
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
     employee=db.query(
         models.Employee
@@ -58,11 +62,12 @@ def get_employee(
         )
     return employee
 
-@router.put("/{id}") ##Update
+@router.put("/{id}")
 def update_employee(
-    id:int,
-    request:schemas.EmployeeCreate,
-    db:Session=Depends(get_db)
+    id: int,
+    request: schemas.EmployeeCreate,
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
 
     employee=db.query(
@@ -86,10 +91,11 @@ def update_employee(
 
     return employee
 
-@router.delete("/{id}")##Delete
+@router.delete("/{id}")
 def delete_employee(
-   id:int,
-   db:Session=Depends(get_db)
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
 
     employee=db.query(

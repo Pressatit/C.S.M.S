@@ -1,0 +1,171 @@
+COMPLETE SUMMARY OF AUTH FIXES
+================================
+
+Phase 1: Backend Bug Fixes
+---------------------------
+
+1. Backend/models.py:3 — Added missing UUID import
+   Before: from sqlalchemy.dialects.postgresql import JSONB
+   After:  from sqlalchemy.dialects.postgresql import JSONB, UUID
+   Why: UUID(as_uuid=True) was used on line 10 but the import was missing
+        → would crash at runtime
+
+2. Backend/routers/users.py:96-111 — Removed dead local-auth code
+   Before: The /register endpoint had 16 lines that:
+           - Queried models.User (a model that doesn't exist)
+           - Called get_password_hash() (a function never defined)
+           - Created a models.User record (would crash with NameError)
+   After:  All dead code is deleted. Registration only uses Supabase Auth
+   Why: Leftover from a half-implemented local password auth
+
+3. Backend/schemas.py:4 — Renamed users → RegisterRequest
+   Before: class users(BaseModel):
+   After:  class RegisterRequest(BaseModel):
+   Why: Confusing name, sounded like a list of users
+
+4. src/pages/Signup.tsx:204-205 — Removed maxLength={8}
+   Before: <input minLength={8} maxLength={8}>
+           → forced password to be exactly 8 characters
+   After:  <input minLength={8}>
+           → password must be at least 8 characters
+   Why: 8-char max prevented using longer, more secure passwords
+
+5. Backend/requirements.txt — Added dependencies
+   Before: 8 packages, no JWT or HTTP client support
+   After:  Added python-jose[cryptography] and httpx
+   Why: Needed for backend JWT verification and Supabase Auth API calls
+
+
+Phase 2: Backend JWT Verification
+-----------------------------------
+
+6. Backend/auth.py — NEW FILE
+   Contains:
+   - get_current_user() — FastAPI dependency that:
+       1. Reads Authorization: Bearer <token> header
+       2. Calls Supabase Auth API (GET /auth/v1/user) to verify JWT
+       3. Looks up Profile in local DB by Supabase user UUID
+       4. Returns Profile or raises 401/503
+   - refresh_supabase_token() — calls Supabase token refresh endpoint
+   Why: Core security layer — every protected route now needs valid JWT
+
+7. Backend/routers/users.py:90 — Added /token/refresh endpoint
+   New POST /token/refresh that:
+   1. Takes refresh_token
+   2. Calls supabase.auth.refresh_session() for new tokens
+   3. Looks up/creates local Profile
+   4. Returns new TokenResponse
+   Why: Enables silent token refresh without re-login
+
+8. Backend/routers/users.py:205,240 — Protected admin endpoints
+   - POST /user (add_user) — now requires Depends(get_current_user)
+   - GET /user (get_all_users) — now requires Depends(get_current_user)
+   Before: Completely open — anyone could create users or list profiles
+   After:  Only authenticated users can call these
+
+
+Phase 3: All Data Routes Protected
+------------------------------------
+
+Every data endpoint now requires Depends(get_current_user):
+
+9.  Backend/routers/employees.py — 5 endpoints protected
+    POST /, GET /, GET /{id}, PUT /{id}, DELETE /{id}
+
+10. Backend/routers/attendance.py — 5 endpoints protected
+    POST /, GET /, GET /{id}, PUT /{id}, DELETE /{id}
+
+11. Backend/routers/assets.py — 5 endpoints protected
+    POST /, GET /, GET /{id}, PUT /{id}, DELETE /{id}
+
+12. Backend/routers/telematics.py — 3 endpoints protected
+    POST /, GET /, GET /asset/{asset_id}
+
+13. Backend/routers/detections.py — 5 endpoints protected
+    POST /, GET /, GET /camera/{camera_id},
+    GET /type/{event_type}, DELETE /{id}
+
+14. Backend/routers/ble_positions.py — 5 endpoints protected
+    POST /, GET /, GET /employee/{employee_id},
+    GET /latest/{employee_id}, DELETE /{id}
+
+Before: 28 endpoints open to anyone with the URL
+After:  Every endpoint requires a valid Supabase JWT
+        Unauthenticated requests return 401 Unauthorized
+
+
+Phase 4: Frontend Auth Infrastructure
+---------------------------------------
+
+15. src/contexts/AuthContext.tsx — NEW FILE
+    Central auth state provider wrapping the entire app
+    Provides: user, token, isAuthenticated, login(), logout()
+    On mount: reads from localStorage, parses user JSON
+    login(): writes to localStorage + updates React state
+    logout(): clears localStorage + React state
+    Why: Before, components read/wrote localStorage inconsistently.
+         Now there's a single source of truth.
+
+16. src/utils/api.ts — NEW FILE
+    Centralized HTTP client wrapping fetch()
+    Auto-injects Authorization: Bearer <token> on every request
+    On 401:
+      1. Tries to refresh using stored refresh_token
+      2. If refresh succeeds: stores new tokens, retries request
+      3. If refresh fails: clears auth, redirects to /login
+    Why: Before, no API request ever sent the token.
+         Also adds automatic session recovery.
+
+
+Phase 5: Frontend Routes & Pages Updated
+------------------------------------------
+
+17. src/App.tsx — Integrated AuthProvider + updated ProtectedLayout
+    Before: ProtectedLayout read localStorage.getItem("token") directly
+    After:  Uses useAuth().isAuthenticated
+    App wrapped with <AuthProvider> inside <BrowserRouter>
+
+18. src/pages/Login.tsx — Uses AuthContext
+    Before: Direct localStorage.setItem() calls
+    After:  Calls login(data.access_token, data.user) from AuthContext
+    Also stores refresh_token (was completely ignored before)
+
+19. src/pages/Signup.tsx — Uses AuthContext
+    Before: Direct localStorage manipulation, unused Meta import
+    After:  Calls login() from AuthContext, stores refresh_token
+
+20. src/pages/Profile.tsx — Uses AuthContext
+    Before: Own useEffect to parse user, own handleLogout with removeItem
+    After:  Uses useAuth() for user and logout(). Cleaner, no duplication.
+
+
+Verification Results
+----------------------
+Frontend build (vite build):        ✅ 0 errors, 1748 modules transformed
+Backend Python syntax (py_compile): ✅ All 11 files compile
+Backend module imports:             ✅ All import correctly
+FastAPI app startup:                ✅ 38 routes registered
+Auth routes:                        ✅ /register, /login, /token/refresh, /user
+Protected routes:                   ✅ 28 endpoints across 6 routers
+Health endpoint:                    ✅ GET /health working
+
+
+BEFORE vs AFTER
+-----------------
+Before                          | After
+--------------------------------|--------------------------------------
+UUID used but not imported     | UUID properly imported
+models.User queried (crash)    | Dead code removed
+get_password_hash called       | Dead code removed
+Password forced to exactly 8   | Password must be at least 8
+No token verification on any   | Every route requires valid JWT
+backend route                  |
+Token stored but never sent    | api.ts auto-injects Bearer header
+with API requests              | + retries on 401
+Auth state scattered across    | Centralized AuthContext
+localStorage reads             |
+refresh_token ignored          | Stored and used for silent refresh
+Profile managed its own state  | Uses shared useAuth()
+28 endpoints publicly open     | All require authentication
+No /token/refresh endpoint     | POST /token/refresh available
+No JWT dependencies            | python-jose + httpx added

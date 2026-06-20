@@ -6,3 +6,5 @@ asyncpg
 python-multipart
 python-dotenv
 supabase
+python-jose[cryptography]
+httpx

@@ -1,33 +1,17 @@
-// ii ndo page yenye itatumika kama home page ndo like mwenye amelogin ataona staff za project yake
-
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { User, Mail, Shield, LogOut, Plus, Radio, ChevronDown, Construction } from "lucide-react"
-
-interface UserData {
-  id: string
-  name: string
-  email: string
-  role: string
-}
+import { useAuth } from "../contexts/AuthContext"
 
 export function Profile() {
   const navigate = useNavigate()
-  const [user, setUser] = useState<UserData | null>(null)
+  const { user, logout } = useAuth()
   const [showComingSoon, setShowComingSoon] = useState(false)
   const [showProjectDropdown, setShowProjectDropdown] = useState(false)
   const [showWorkersMessage, setShowWorkersMessage] = useState(false)
 
-  useEffect(() => {
-    const userData = localStorage.getItem("user")
-    if (userData) {
-      setUser(JSON.parse(userData))
-    }
-  }, [])
-
   const handleLogout = () => {
-    localStorage.removeItem("token")
-    localStorage.removeItem("user")
+    logout()
     navigate("/login")
   }
 

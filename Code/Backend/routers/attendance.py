@@ -3,18 +3,19 @@ from sqlalchemy.orm import Session
 import models
 import schemas
 from database import get_db
+from auth import get_current_user
 
 router = APIRouter(
     prefix="/attendance",
     tags=["Attendance"]
 )
 
-@router.post("/") # CREATE
+@router.post("/")
 def mark_attendance(
     request: schemas.AttendanceCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
-    # 1. Check if the employee actually exists in the system
     employee = db.query(models.Employee).filter(
         models.Employee.employee_id == request.employee_id
     ).first()
@@ -25,40 +26,30 @@ def mark_attendance(
             detail="Employee not found"
         )
 
-    # 2. Create the new attendance object
     attendance = models.AttendanceRecord(
         employee_id=request.employee_id,
         attendance=request.attendance
     )
 
-    # 3. Save to database
     db.add(attendance)
     db.commit()
     db.refresh(attendance)
 
     return attendance
 
-@router.get("/") # READ ALL
-def get_attendance(db: Session = Depends(get_db)):
+@router.get("/")
+def get_attendance(
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
+):
     records = db.query(models.AttendanceRecord).all()
     return records
 
-@router.get("/{id}") # READ ONE
-def get_attendance_record(id: int, db: Session = Depends(get_db)):
-    record = db.query(models.AttendanceRecord).filter(
-        models.AttendanceRecord.id == id
-    ).first()
-
-    if not record:
-        raise HTTPException(status_code=404, detail="Record not found")
-    
-    return record
-
-@router.put("/{id}") # UPDATE
-def update_attendance(
-    id: int, 
-    request: schemas.AttendanceCreate, 
-    db: Session = Depends(get_db)
+@router.get("/{id}")
+def get_attendance_record(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
     record = db.query(models.AttendanceRecord).filter(
         models.AttendanceRecord.id == id
@@ -67,15 +58,34 @@ def update_attendance(
     if not record:
         raise HTTPException(status_code=404, detail="Record not found")
 
-    # Update the specific field
+    return record
+
+@router.put("/{id}")
+def update_attendance(
+    id: int,
+    request: schemas.AttendanceCreate,
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
+):
+    record = db.query(models.AttendanceRecord).filter(
+        models.AttendanceRecord.id == id
+    ).first()
+
+    if not record:
+        raise HTTPException(status_code=404, detail="Record not found")
+
     record.attendance = request.attendance
     db.commit()
     db.refresh(record)
 
     return record
 
-@router.delete("/{id}") # DELETE
-def delete_attendance(id: int, db: Session = Depends(get_db)):
+@router.delete("/{id}")
+def delete_attendance(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
+):
     record = db.query(models.AttendanceRecord).filter(
         models.AttendanceRecord.id == id
     ).first()

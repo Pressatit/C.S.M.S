@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 import models
 import schemas
 from database import get_db
+from auth import get_current_user
 
 router = APIRouter(
     prefix="/detections",
@@ -11,8 +12,9 @@ router = APIRouter(
 
 @router.post("/")
 def create_detection(
-    request:schemas.DetectionEventCreate,
-    db: Session = Depends(get_db)
+    request: schemas.DetectionEventCreate,
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
     detection = models.DetectionEvent(
         camera_id=request.camera_id,
@@ -30,56 +32,58 @@ def create_detection(
 
 @router.get("/")
 def get_detections(
-    db:Session=Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
     return db.query(
         models.DetectionEvent
     ).all()
 
-@router.get("/camera/{camera_id}") ##Filter by camera i.e camera 1, camera 2 etc
+@router.get("/camera/{camera_id}")
 def detections_by_camera(
-    camera_id:int,
-    db:Session=Depends(get_db)
+    camera_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
     return db.query(
-      models.DetectionEvent
+        models.DetectionEvent
     ).filter(
-      models.DetectionEvent.camera_id==camera_id
+        models.DetectionEvent.camera_id == camera_id
     ).all()
 
-@router.get("/type/{event_type}") ##Filter by event type i.e could be ppe or personnel
+@router.get("/type/{event_type}")
 def detections_by_type(
-   event_type:str,
-   db:Session=Depends(get_db)
+    event_type: str,
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
-
-   return db.query(
-      models.DetectionEvent
-   ).filter(
-      models.DetectionEvent.event_type==event_type
-   ).all()
-
-@router.delete("/{id}") ##Admin cleanup
-def delete_detection(
-    id:int,
-    db:Session=Depends(get_db)
-):
-    event=db.query(
-      models.DetectionEvent
+    return db.query(
+        models.DetectionEvent
     ).filter(
-      models.DetectionEvent.id==id
+        models.DetectionEvent.event_type == event_type
+    ).all()
+
+@router.delete("/{id}")
+def delete_detection(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
+):
+    event = db.query(
+        models.DetectionEvent
+    ).filter(
+        models.DetectionEvent.id == id
     ).first()
 
     if not event:
         raise HTTPException(
-          status_code=404,
-          detail="Event not found"
+            status_code=404,
+            detail="Event not found"
         )
 
     db.delete(event)
     db.commit()
 
     return {
-      "message":"Detection deleted"
+        "message": "Detection deleted"
     }
-

@@ -3,13 +3,14 @@
 import { useState } from "react"
 import { useNavigate, Navigate, Link } from "react-router-dom"
 import { Construction, Eye, EyeOff, LogIn } from "lucide-react"
-import { Meta } from "react-router-dom"
+import { useAuth } from "../contexts/AuthContext"
 
 const API_BASE = "http://localhost:8000";
 
 interface LoginResponse {
   access_token: string
   token_type: string
+  refresh_token?: string
   detail?: string
   user: {
     id: string
@@ -21,13 +22,12 @@ interface LoginResponse {
 
 export function Login() {
   const navigate = useNavigate()
+  const { login, isAuthenticated } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-
-  const isAuthenticated = !!localStorage.getItem("token")
 
   if (isAuthenticated) {
     return <Navigate to="/live" replace />
@@ -51,8 +51,10 @@ export function Login() {
         throw new Error(data.detail || "Invalid credentials")
       }
 
-      localStorage.setItem("token", data.access_token)
-      localStorage.setItem("user", JSON.stringify(data.user))
+      if (data.refresh_token) {
+        localStorage.setItem("refresh_token", data.refresh_token)
+      }
+      login(data.access_token, data.user)
       navigate("/live")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invalid email or password")

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 import models
 import schemas
 from database import get_db
+from auth import get_current_user
 
 router = APIRouter(
     prefix="/assets",
@@ -14,7 +15,8 @@ router = APIRouter(
 @router.post("/")
 def create_asset(
     request: schemas.AssetCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
     existing = db.query(
         models.Asset
@@ -44,7 +46,8 @@ def create_asset(
 
 @router.get("/")
 def get_assets(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
     return db.query(
         models.Asset
@@ -54,7 +57,8 @@ def get_assets(
 @router.get("/{id}")
 def get_asset(
     id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
     asset = db.query(
         models.Asset
@@ -69,11 +73,13 @@ def get_asset(
         )
     return asset
 
+
 @router.put("/{id}")
 def update_asset(
     id: int,
     request: schemas.AssetCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
     asset = db.query(
         models.Asset
@@ -86,7 +92,7 @@ def update_asset(
             status_code=404,
             detail="Asset not found"
         )
-     # Check if another asset already uses this plate
+
     duplicate_plate = db.query(
         models.Asset
     ).filter(
@@ -114,7 +120,8 @@ def update_asset(
 @router.delete("/{id}")
 def delete_asset(
     id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
 ):
     asset = db.query(
         models.Asset

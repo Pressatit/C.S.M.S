@@ -1,16 +1,13 @@
-// just a quick making of an account
-
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { Check, Construction, Eye, EyeOff, KeyRound, UserPlus, X } from "lucide-react"
-
-import { Meta } from "react-router-dom"
-
+import { useAuth } from "../contexts/AuthContext"
 
 const API_BASE = "http://localhost:8000";
 interface RegisterResponse {
   access_token: string
   token_type: string
+  refresh_token?: string
   detail?: string
   user: {
     id: string
@@ -56,6 +53,7 @@ function generateStrongPassword() {
 
 export function Signup() {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -64,7 +62,7 @@ export function Signup() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const passwordChecks = [
-    { label: "8 characters", passed: password.length >= 8 },
+    { label: "more than 8 characters", passed: password.length >= 8 },
     { label: "Uppercase letter", passed: /[A-Z]/.test(password) },
     { label: "Lowercase letter", passed: /[a-z]/.test(password) },
     { label: "Number", passed: /\d/.test(password) },
@@ -101,8 +99,10 @@ export function Signup() {
         throw new Error(data.detail || "Registration failed")
       }
 
-      localStorage.setItem("token", data.access_token)
-      localStorage.setItem("user", JSON.stringify(data.user))
+      if (data.refresh_token) {
+        localStorage.setItem("refresh_token", data.refresh_token)
+      }
+      login(data.access_token, data.user)
       navigate("/live")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed. Email may already be in use.")
@@ -202,9 +202,8 @@ export function Signup() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={8}
-                  maxLength={8}
                   className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-colors pr-10"
-                  placeholder="8 strong characters"
+                  placeholder="Min. 8 characters"
                 />
                 <button
                   type="button"

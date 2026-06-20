@@ -7,6 +7,7 @@ from typing import List
 import os
 from uuid import UUID
 from supabase import Client, create_client
+from auth import get_current_user
 
 router=APIRouter(
 
@@ -86,34 +87,34 @@ def get_or_create_profile(db: Session, user_id: str, email: str, user_metadata: 
     role = metadata.get("role") or "user"
     return create_or_update_profile(db, user_id, email, name, role)
 
+@router.post("/token/refresh", response_model=schemas.TokenResponse)
+def refresh_token(request: schemas.RefreshRequest, db: Session = Depends(get_db)):
+    try:
+        auth_response = supabase.auth.refresh_session(request.refresh_token)
+    except Exception as exc:
+        raise HTTPException(status_code=401, detail=auth_error_detail(exc))
+
+    if not auth_response.user or not auth_response.session:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    profile = get_or_create_profile(
+        db,
+        auth_response.user.id,
+        auth_response.user.email or "",
+        auth_response.user.user_metadata
+    )
+
+    return schemas.TokenResponse(
+        access_token=auth_response.session.access_token,
+        refresh_token=auth_response.session.refresh_token,
+        user=build_user_response(profile)
+    )
+
 @router.post("/register", response_model=schemas.TokenResponse)
-<<<<<<< HEAD
-def register(request: schemas.users, db :Session = Depends(get_db)):
-    validate_password_strength(request.password)
-=======
-def register(request: schemas.users, db: Session = Depends(get_db)):
+def register(request: schemas.RegisterRequest, db: Session = Depends(get_db)):
     # 1. Validation: Ensure email isn't empty
     if not request.email:
         raise HTTPException(status_code=400, detail="Email is required")
-
-    # 2. Check existence
-    existing_user = db.query(models.User).filter(models.User.email == request.email).first()
-    if existing_user:
-        # Log this to your terminal so you can see WHICH email is causing the hit
-        print(f"Conflict: Email {request.email} already exists in DB") 
-        raise HTTPException(status_code=400, detail=f"User with {request.email} already exists")
-  
-    hashed_password = get_password_hash(request.password)
-    query=models.User(
-        name=request.name,
-        role=request.role or "user",
-        email=request.email,
-        password=hashed_password
-    )
-    db.add(query)
-    db.commit()
-    db.refresh(query)
->>>>>>> 5fcb42224b01095eea7c189df3079dd79ac3d4fb
 
     existing_profile = db.query(models.Profile).filter(models.Profile.email == request.email).first()
     if existing_profile:
@@ -201,7 +202,11 @@ def login(request: schemas.LoginRequest, db :Session = Depends(get_db)):
     )
 
 @router.post("/user")
-def add_user(request: schemas.users, db :Session = Depends(get_db)):
+def add_user(
+    request: schemas.RegisterRequest,
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
+):
     validate_password_strength(request.password)
 
     try:
@@ -232,7 +237,10 @@ def add_user(request: schemas.users, db :Session = Depends(get_db)):
     return build_user_response(profile)
 
 @router.get("/user",response_model=List[schemas.showUser])
-def get_all_users(db:Session =Depends(get_db)):
+def get_all_users(
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(get_current_user)
+):
     users=db.query(models.Profile).all()
 
     return users

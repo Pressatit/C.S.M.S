@@ -1,11 +1,6 @@
 from database import Base
-<<<<<<< HEAD
-from sqlalchemy import Column,String,DateTime
-from sqlalchemy.dialects.postgresql import UUID
-=======
 from sqlalchemy import Column,Integer,String,Float,ForeignKey,DateTime
-from sqlalchemy.dialects.postgresql import JSONB
->>>>>>> 5fcb42224b01095eea7c189df3079dd79ac3d4fb
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
@@ -18,9 +13,6 @@ class Profile(Base):
     email=Column(String,unique=True,index=True,nullable=False)
     created_at=Column(DateTime,server_default=func.now(),nullable=False)
 
-<<<<<<< HEAD
-User = Profile
-=======
 class Employee(Base):
     __tablename__ = "employees"
 
@@ -102,4 +94,3 @@ class DetectionEvent(Base):
     timestamp_clock = Column(Integer)
     session_start_epoch = Column(Integer)
     bbox = Column(JSONB)
->>>>>>> 5fcb42224b01095eea7c189df3079dd79ac3d4fb
