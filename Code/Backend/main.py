@@ -1,4 +1,4 @@
-from sqlalchemy import text
+from sqlalchemy import text,Uuid
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -14,6 +14,9 @@ from routers import assets
 from routers import telematics
 from routers import detections
 from routers import ble_positions
+
+
+
 
 app=FastAPI(
     root_path="/",
