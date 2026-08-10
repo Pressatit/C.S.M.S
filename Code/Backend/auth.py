@@ -9,6 +9,8 @@ import models
 import schemas
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_ANON_KEY =os.getenv("SUPABASE_ANON_KEY")
+
 security = HTTPBearer()
 
 
@@ -20,7 +22,9 @@ def get_current_user(
     try:
         response = httpx.get(
             f"{SUPABASE_URL}/auth/v1/user",
-            headers={"Authorization": f"Bearer {token}"},
+            headers={
+                "Authorization": f"Bearer {token}",
+                "apikey":SUPABASE_ANON_KEY },
             timeout=10
         )
         if response.status_code != 200:

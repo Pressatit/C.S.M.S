@@ -112,6 +112,8 @@ class DetectionEventCreate(BaseModel):
     event_type: str
     confidence: float
     timestamp_epoch: int
+    timestamp_clock: int
+    session_start_epoch: int
     bbox: BoundingBox
 
 class DetectionEventResponse(BaseModel):
@@ -122,6 +124,21 @@ class DetectionEventResponse(BaseModel):
 
     class Config:
         from_attributes=True
+
+class DetectionItem(BaseModel):
+    camera_id: int
+    event_type: str
+    confidence: float
+    bbox: BoundingBox
+    timestamp_epoch: int
+    timestamp_clock: int
+    session_start_epoch: int
+
+
+class FrameDetectionsPayload(BaseModel):
+    camera_id: int
+    frame_timestamp: float
+    detections: List[DetectionItem]
 
 class LoginRequest(BaseModel):
     email: str

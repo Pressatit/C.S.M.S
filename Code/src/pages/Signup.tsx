@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { Check, Construction, Eye, EyeOff, KeyRound, UserPlus, X } from "lucide-react"
+import { Check, Construction, Eye, EyeOff, KeyRound,UserPlus, X } from "lucide-react"
 import { useAuth } from "../contexts/AuthContext"
 
 const API_BASE = "http://localhost:8000";

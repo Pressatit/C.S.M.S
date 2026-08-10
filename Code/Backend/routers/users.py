@@ -9,7 +9,7 @@ from uuid import UUID
 from supabase import Client, create_client
 from auth import get_current_user
 
-router=APIRouter(
+router=APIRouter( tags=["Users"]
 
 )
 

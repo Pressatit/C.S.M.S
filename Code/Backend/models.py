@@ -1,8 +1,9 @@
 from database import Base
-from sqlalchemy import Column,Integer,String,Float,ForeignKey,DateTime
+from sqlalchemy import Column,Integer,String,Float,ForeignKey,DateTime,Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
+
 
 class Profile(Base):
     __tablename__="profiles"
@@ -94,3 +95,17 @@ class DetectionEvent(Base):
     timestamp_clock = Column(Integer)
     session_start_epoch = Column(Integer)
     bbox = Column(JSONB)
+
+class Recording(Base):
+    __tablename__="recordings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    camera_id = Column(Integer, nullable=False)
+    started_at = Column(DateTime(timezone=True), nullable=False)
+    ended_at = Column(DateTime(timezone=True), nullable=False)
+    file_path = Column(Text, nullable=False)
+    file_size_mb = Column(Float)
+    duration_secs = Column(Integer)
+    codec = Column(String, default="h265")
+    video_format = Column("format",String, default="mp4")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

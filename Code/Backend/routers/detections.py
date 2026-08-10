@@ -10,6 +10,7 @@ router = APIRouter(
     tags=["Detections"]
 )
 
+#Create detections
 @router.post("/")
 def create_detection(
     request: schemas.DetectionEventCreate,
@@ -30,6 +31,7 @@ def create_detection(
 
     return detection
 
+#Get detections
 @router.get("/")
 def get_detections(
     db: Session = Depends(get_db),
@@ -39,6 +41,7 @@ def get_detections(
         models.DetectionEvent
     ).all()
 
+#Get detections per camera
 @router.get("/camera/{camera_id}")
 def detections_by_camera(
     camera_id: int,
@@ -51,6 +54,7 @@ def detections_by_camera(
         models.DetectionEvent.camera_id == camera_id
     ).all()
 
+#Get detections by event type
 @router.get("/type/{event_type}")
 def detections_by_type(
     event_type: str,
@@ -63,6 +67,7 @@ def detections_by_type(
         models.DetectionEvent.event_type == event_type
     ).all()
 
+#Delete event
 @router.delete("/{id}")
 def delete_detection(
     id: int,

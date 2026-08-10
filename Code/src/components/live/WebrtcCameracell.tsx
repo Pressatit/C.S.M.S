@@ -57,7 +57,6 @@ export function WebRtcVideoPlayer({ streamName }: WebRtcVideoPlayerProps) {
     <video 
       ref={videoRef} 
       className="w-full h-full object-cover" 
-      muted 
       playsInline 
       autoPlay 
     />

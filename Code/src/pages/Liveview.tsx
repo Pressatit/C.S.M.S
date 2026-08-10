@@ -63,6 +63,7 @@ export function Liveview() {
                                 isExpanded={true}
                                 onClick={() => {}}
                                 onClose={() => setExpandedId(null)}
+                                
                             />
                         </div>
 
