@@ -25,19 +25,19 @@ export const NAV_ITEMS: NavItem[] = [
     icon: "PlayCircle",      // Play button icon
   },
   {
-    label: "Worker Management",
+    label: "Employee Management",
     path: "/employees",
     icon: "HardHat",         // Construction helmet icon
-  },
-  {
-    label: "Site Progress",
-    path: "/progress",
-    icon: "BarChart3",       // Chart/progress icon
   },
   {
     label: "Asset Tracking",
     path: "/assets",
     icon: "Truck",           // Vehicle/machinery icon
+  },
+  {
+    label: "Site Progress",
+    path: "/progress",
+    icon: "BarChart3",       // Chart/progress icon
   },
   {
     label: "Project Advisor",

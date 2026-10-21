@@ -17,9 +17,8 @@ class showUser(BaseModel):
         from_attributes=True
 
 class EmployeeCreate(BaseModel): 
-    employee_id:str
     first_name:str
-    surname:str
+    second_name:str
     role:Optional[str]=None
     id_number:str
     phone_number:str
@@ -68,10 +67,11 @@ class BLEPositionResponse(BaseModel):
         from_attributes=True
         
 class AssetCreate(BaseModel):
-    asset_type:str
-    plate:str
-    status:str
-    location:str  
+    asset_name: str
+    number_plate: str
+    device_imei: str
+    asset_type: str
+
 
 class AssetResponse(BaseModel):
     id:int

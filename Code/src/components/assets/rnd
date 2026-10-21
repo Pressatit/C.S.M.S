@@ -1,0 +1,20 @@
+import { PointsChart } from "@/components/ui/points-chart"
+
+export default function Demo() {
+  return (
+    <div style={{ padding: "16px 8px", minWidth: "600px" }}>
+      <PointsChart
+        title="Your points"
+        data={[
+          { date: "Fri", total: 0, change: 0 },
+          { date: "Sat", total: 200, change: 200 },
+          { date: "Sun", total: 280, change: 80 },
+          { date: "Mon", total: 480, change: 200 },
+          { date: "Tue", total: 650, change: 170 },
+          { date: "Wed", total: 900, change: 250 },
+          { date: "Thu", total: 1100, change: 200 },
+        ]}
+      />
+    </div>
+  )
+}

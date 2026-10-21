@@ -15,6 +15,9 @@ __pycache__/
 node_modules/
 **/node_modules/
 
+img/
+**/img/
+
 # OS files
 .DS_Store
 Thumbs.db

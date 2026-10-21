@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from datetime import date,time
 
 import models
 import schemas
@@ -47,12 +48,13 @@ def create_ble_position(
 
 @router.get("/")
 def get_positions(
+    query_date:str,
     db: Session = Depends(get_db),
     current_user: models.Profile = Depends(get_current_user)
+    
 ):
-    return db.query(
-        models.BLEPosition
-    ).all()
+    query_date=date.today()
+    return db.query(models.BLEPosition).filter(models.BLEPosition.created_at==query_date).all()
 
 
 @router.get("/employee/{employee_id}")

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 import models
 import schemas
@@ -10,16 +11,40 @@ router = APIRouter(
     tags=["employees"]
 )
 
-@router.post("/")
+def generate_initials(first_name: str, second_name: str) -> str:
+    # Remove accidental leading/trailing spaces
+    f_name = (first_name or "").strip()
+    s_name = (second_name or "").strip()
+    
+    # Extract first letters and make them uppercase
+    f_initial = f_name[0].upper() if f_name else ""
+    s_initial = s_name[0].upper() if s_name else ""
+    
+    initials = f"{f_initial}{s_initial}"
+    
+    # Fallback if both fields were somehow empty
+    return initials if initials else "EE"
+
+@router.post("")
 def create_employee(
     request: schemas.EmployeeCreate,
     db: Session = Depends(get_db),
     current_user: models.Profile = Depends(get_current_user)
 ):
+
+    result = db.execute(text("SELECT nextval('employees_id_seq')"))
+    next_id = result.scalar()
+
+    # 2. Format the fields safely in Python memory first
+    formatted_emp_id = f"EMP{next_id:03d}"
+    calculated_initials = generate_initials(request.first_name, request.second_name)
+
     employee = models.Employee(
-        employee_id=request.employee_id,
+        id=next_id,  
+        employee_id=formatted_emp_id,
+        initials=calculated_initials,
         first_name=request.first_name,
-        surname=request.surname,
+        second_name=request.second_name,
         role=request.role,
         id_number=request.id_number,
         phone_number=request.phone_number,
@@ -32,10 +57,10 @@ def create_employee(
 
     return employee
 
-@router.get("/")
+@router.get("")
 def get_employees(
     db: Session = Depends(get_db),
-    current_user: models.Profile = Depends(get_current_user)
+    #current_user: models.Profile = Depends(get_current_user)
 ):
     employees = db.query(
         models.Employee
@@ -47,7 +72,7 @@ def get_employees(
 def get_employee(
     id: int,
     db: Session = Depends(get_db),
-    current_user: models.Profile = Depends(get_current_user)
+    #current_user: models.Profile = Depends(get_current_user)
 ):
     employee=db.query(
         models.Employee

@@ -18,9 +18,10 @@ class Employee(Base):
     __tablename__ = "employees"
 
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(String,unique=True,nullable=False)
+    employee_id = Column(String,unique=True,nullable=True)
+    initials=Column(String)
     first_name = Column(String,nullable=False)
-    surname = Column(String,nullable=False)
+    second_name = Column(String,nullable=False)
     role = Column(String)
     id_number = Column(String,unique=True)
     phone_number = Column(String)
@@ -57,15 +58,17 @@ class BLEPosition(Base):
     y_meters = Column(Float)
     zone = Column(String)
     timestamp_epoch = Column(Integer)
+    created_at=Column(DateTime,server_default=func.now(),nullable=True)
 
 class Asset(Base):
     __tablename__="assets"
 
     id = Column(Integer, primary_key=True, index=True)
     asset_type = Column(String)
+    name=Column(String)
     plate = Column(String, unique=True)
-    status = Column(String, default="off")
     location = Column(String)
+    device_imei=Column(String)
     created_at = Column(DateTime, server_default=func.now())
     
     telematics = relationship(
@@ -83,6 +86,10 @@ class TelematicsData(Base):
     engine_hours = Column(Float)
     timestamp_epoch = Column(Integer)
     engine_status = Column(String)
+    longitude =Column(String)
+    Latitude=Column(String)
+    fuel_consumption_rate=Column(Float)
+    added_at=Column(DateTime, server_default=func.now())
 
 class DetectionEvent(Base):
     __tablename__="detection_events"

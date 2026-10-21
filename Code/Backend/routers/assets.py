@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException,Form
 from sqlalchemy.orm import Session
 
 import models
@@ -14,14 +14,14 @@ router = APIRouter(
 
 @router.post("/")
 def create_asset(
-    request: schemas.AssetCreate,
+    asset:schemas.AssetCreate,
     db: Session = Depends(get_db),
     current_user: models.Profile = Depends(get_current_user)
 ):
     existing = db.query(
         models.Asset
     ).filter(
-        models.Asset.plate == request.plate
+        models.Asset.plate == asset.number_plate
     ).first()
 
     if existing:
@@ -31,10 +31,10 @@ def create_asset(
         )
 
     asset = models.Asset(
-        asset_type=request.asset_type,
-        plate=request.plate,
-        status=request.status,
-        location=request.location
+        asset_type=asset.asset_type,
+        plate=asset.number_plate,
+        name=asset.asset_name,
+        device_imei=asset.device_imei
     )
 
     db.add(asset)
@@ -47,7 +47,7 @@ def create_asset(
 @router.get("/")
 def get_assets(
     db: Session = Depends(get_db),
-    current_user: models.Profile = Depends(get_current_user)
+    
 ):
     return db.query(
         models.Asset
@@ -109,7 +109,7 @@ def update_asset(
     asset.asset_type = request.asset_type
     asset.plate = request.plate
     asset.status = request.status
-    asset.location = request.location
+    asset.device_imei = request.device_imei
 
     db.commit()
     db.refresh(asset)
